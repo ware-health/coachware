@@ -59,45 +59,22 @@ export default async function TemplateDetailPage({
             <p className="text-sm text-neutral-600">{template.notes}</p>
           ) : null}
         </div>
-        <Button variant="outline" asChild>
-          <a href={`/plans/${params.planId}`}>Back to plan</a>
-        </Button>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Template details</h2>
-          <form
-            action={updateMeta}
-            className="space-y-3 rounded-lg border border-neutral-300 p-4"
-          >
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input name="name" defaultValue={template.name} required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
-              <Textarea name="notes" defaultValue={template.notes || ""} />
-            </div>
-            <Button type="submit">Save changes</Button>
-          </form>
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Exercises</h2>
-            <TemplateExerciseActions
-              planId={params.planId}
-              templateId={params.templateId}
-              exercises={exerciseLibrary}
-            />
-          </div>
-          <TemplateExerciseList
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Exercises</h2>
+          <TemplateExerciseActions
             planId={params.planId}
             templateId={params.templateId}
-            exercises={template.exercises || []}
+            exercises={exerciseLibrary}
           />
-        </section>
+        </div>
+        <TemplateExerciseList
+          planId={params.planId}
+          templateId={params.templateId}
+          exercises={template.exercises || []}
+        />
       </div>
     </div>
   );
