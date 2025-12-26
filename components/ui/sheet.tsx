@@ -45,12 +45,6 @@ const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close
-        aria-label="Close"
-        className="absolute right-4 top-4 text-sm text-neutral-600 hover:underline"
-      >
-        Close
-      </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </SheetPortal>
 ));

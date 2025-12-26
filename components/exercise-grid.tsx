@@ -72,58 +72,86 @@ export function ExerciseGrid({
       {filtered.length === 0 ? (
         <p className="text-sm text-neutral-600">No exercises found.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {current.map((exercise) => (
-            <Sheet
-              key={exercise.id}
-              open={selected?.id === exercise.id}
-              onOpenChange={(isOpen) => setSelected(isOpen ? exercise : null)}
-            >
-              <SheetTrigger asChild>
-                <button
-                  onClick={() => setSelected(exercise)}
-                  className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-300 bg-white text-left"
-                >
-                  <AnimationPreview
-                    animationUrl={exercise.animationUrl}
-                    name={exercise.name}
-                  />
-                  <div className="p-3">
-                    <p className="text-sm font-semibold">{exercise.name}</p>
-                  </div>
-                </button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-96">
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <p className="text-xs uppercase text-neutral-500">Exercise</p>
-                    <h2 className="text-xl font-semibold">{exercise.name}</h2>
-                  </div>
-                  <AnimationPreview
-                    animationUrl={exercise.animationUrl}
-                    name={exercise.name}
-                  />
-                  {exercise.notes ? (
-                    <p className="text-sm text-neutral-700">{exercise.notes}</p>
-                  ) : (
-                    <p className="text-sm text-neutral-500">No notes provided.</p>
-                  )}
-                  <Button
-                    className="w-full"
-                    disabled={!allowAdd}
-                    onClick={() => {
-                      if (!allowAdd) return;
-                      onAdd?.(exercise);
-                    }}
+        <div className="overflow-hidden rounded-lg border border-neutral-300">
+          <div className="min-w-full overflow-x-auto">
+            <table className="min-w-full divide-y divide-neutral-200">
+              <thead className="bg-neutral-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Preview
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Type
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 bg-white">
+                {current.map((exercise) => (
+                  <tr
+                    key={exercise.id}
+                    className="hover:bg-neutral-50 cursor-pointer"
+                    onClick={() => setSelected(exercise)}
                   >
-                    {allowAdd ? "Add to template" : "Open a template to add"}
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
-          ))}
+                    <td className="px-4 py-2">
+                      <div className="flex h-12 w-12 items-center justify-center">
+                        <AnimationPreview
+                          animationUrl={exercise.animationUrl}
+                          name={exercise.name}
+                          size="sm"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
+                      {exercise.name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-neutral-600">
+                      {exercise.isSystem ? "System" : "Custom"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+      <Sheet
+        open={!!selected}
+        onOpenChange={(isOpen) => !isOpen && setSelected(null)}
+      >
+        {selected ? (
+          <SheetContent side="right" className="w-96">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase text-neutral-500">Exercise</p>
+                <h2 className="text-xl font-semibold">{selected.name}</h2>
+              </div>
+              <AnimationPreview
+                animationUrl={selected.animationUrl}
+                name={selected.name}
+              />
+              {selected.notes ? (
+                <p className="text-sm text-neutral-700">{selected.notes}</p>
+              ) : (
+                <p className="text-sm text-neutral-500">No notes provided.</p>
+              )}
+              <Button
+                className="w-full"
+                disabled={!allowAdd}
+                onClick={() => {
+                  if (!allowAdd || !selected) return;
+                  onAdd?.(selected);
+                  setSelected(null);
+                }}
+              >
+                {allowAdd ? "Add to template" : "Open a template to add"}
+              </Button>
+            </div>
+          </SheetContent>
+        ) : null}
+      </Sheet>
     </div>
   );
 }
