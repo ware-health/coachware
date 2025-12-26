@@ -9,9 +9,15 @@ type Props = {
   planId: string;
   templateId: string;
   exercises: Exercise[];
+  rounded?: boolean;
 };
 
-export function TemplateExerciseActions({ planId, templateId, exercises }: Props) {
+export function TemplateExerciseActions({
+  planId,
+  templateId,
+  exercises,
+  rounded
+}: Props) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -19,6 +25,8 @@ export function TemplateExerciseActions({ planId, templateId, exercises }: Props
       <ExercisePicker
         exercises={exercises}
         pageSize={12}
+        rounded={rounded}
+        label="+ Add exercise"
         onSelect={(exercise) => {
           startTransition(() => {
             addExerciseToTemplate({

@@ -59,17 +59,16 @@ export default async function TemplateDetailPage({
             <p className="text-sm text-neutral-600">{template.notes}</p>
           ) : null}
         </div>
+        <TemplateExerciseActions
+          planId={params.planId}
+          templateId={params.templateId}
+          exercises={exerciseLibrary}
+          rounded
+        />
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Exercises</h2>
-          <TemplateExerciseActions
-            planId={params.planId}
-            templateId={params.templateId}
-            exercises={exerciseLibrary}
-          />
-        </div>
+        <h2 className="text-lg font-semibold">Exercises</h2>
         <TemplateExerciseList
           planId={params.planId}
           templateId={params.templateId}

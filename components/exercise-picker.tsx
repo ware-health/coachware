@@ -10,15 +10,28 @@ type Props = {
   exercises: Exercise[];
   onSelect: (exercise: Exercise) => void;
   pageSize?: number;
+  rounded?: boolean;
+  label?: string;
 };
 
-export function ExercisePicker({ exercises, onSelect, pageSize }: Props) {
+export function ExercisePicker({
+  exercises,
+  onSelect,
+  pageSize,
+  rounded,
+  label = "Add exercise"
+}: Props) {
   const [open, setOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline">Add exercise</Button>
+        <Button
+          variant="default"
+          className={rounded ? "rounded-md px-4 py-2" : ""}
+        >
+          {label}
+        </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[28rem]">
         <div className="space-y-4">

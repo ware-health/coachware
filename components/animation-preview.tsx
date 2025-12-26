@@ -4,11 +4,19 @@ import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 
 export function AnimationPreview({
-  animationUrl
+  animationUrl,
+  size = "md"
 }: {
   animationUrl?: string | null;
   name: string;
+  size?: "md" | "sm";
 }) {
+  const containerClass =
+    size === "sm"
+      ? "flex h-12 w-12 items-center justify-center bg-white"
+      : "flex h-32 w-full items-center justify-center border-b border-neutral-200 bg-white";
+  const lottieSize = size === "sm" ? "h-10 w-10" : "h-28 w-28";
+
   const [animationData, setAnimationData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +48,8 @@ export function AnimationPreview({
 
   if (animationData) {
     return (
-      <div className="flex h-40 items-center justify-center border-b border-neutral-200 bg-white">
-        <Lottie animationData={animationData} loop className="h-36 w-full" />
+      <div className={containerClass}>
+        <Lottie animationData={animationData} loop className={lottieSize} />
       </div>
     );
   }

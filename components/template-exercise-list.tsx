@@ -2,12 +2,11 @@
 
 import { Exercise, TemplateExercise } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import {
-  moveExerciseInTemplate,
-  removeExerciseFromTemplate
-} from "@/app/actions/templates";
-import { useTransition } from "react";
+import { moveExerciseInTemplate, removeExerciseFromTemplate } from "@/app/actions/templates";
+import { useState, useTransition } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { exerciseMap } from "@/data/exercises";
+import { AnimationPreview } from "@/components/animation-preview";
 
 type Props = {
   planId: string;
@@ -17,6 +16,8 @@ type Props = {
 
 export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
   const [pending, startTransition] = useTransition();
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const handleMove = (from: number, to: number) => {
     startTransition(() => {
@@ -37,13 +38,13 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
           <thead className="bg-neutral-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                Preview
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                 Exercise
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                 Type
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                Actions
               </th>
             </tr>
           </thead>
@@ -61,42 +62,34 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
               exercises.map((item, idx) => {
                 const exercise: Exercise | undefined = exerciseMap[item.exerciseId];
                 return (
-                  <tr key={`${item.exerciseId}-${idx}`} className="hover:bg-neutral-50">
+                  <tr
+                    key={`${item.exerciseId}-${idx}`}
+                    className={`cursor-pointer hover:bg-neutral-50 ${dragIndex === idx ? "bg-neutral-100" : ""}`}
+                    draggable
+                    onDragStart={() => setDragIndex(idx)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragIndex === null || dragIndex === idx) return;
+                      handleMove(dragIndex, idx);
+                      setDragIndex(idx);
+                    }}
+                    onDragEnd={() => setDragIndex(null)}
+                    onClick={() => setSelectedIndex(idx)}
+                  >
+                    <td className="px-4 py-2">
+                      <div className="flex h-14 w-16 items-center justify-center">
+                        <AnimationPreview
+                          animationUrl={exercise?.animationUrl}
+                          name={exercise?.name || item.exerciseId}
+                          size="sm"
+                        />
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
                       {exercise?.name || item.exerciseId}
                     </td>
                     <td className="px-4 py-3 text-sm text-neutral-600">
                       {item.type || exercise?.type || "N/A"}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleMove(idx, Math.max(0, idx - 1))}
-                          disabled={idx === 0 || pending}
-                        >
-                          Up
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleMove(idx, Math.min(exercises.length - 1, idx + 1))
-                          }
-                          disabled={idx === exercises.length - 1 || pending}
-                        >
-                          Down
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemove(idx)}
-                          disabled={pending}
-                        >
-                          Remove
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 );
@@ -105,6 +98,49 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
           </tbody>
         </table>
       </div>
+
+      <Sheet open={selectedIndex !== null} onOpenChange={(open) => !open && setSelectedIndex(null)}>
+        <SheetContent side="right" className="w-[22rem]">
+          {selectedIndex !== null ? (
+            <div className="space-y-4">
+              {(() => {
+                const item = exercises[selectedIndex];
+                const exercise = exerciseMap[item.exerciseId];
+                return (
+                  <>
+                    <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+                      <AnimationPreview
+                        animationUrl={exercise?.animationUrl}
+                        name={exercise?.name || item.exerciseId}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase text-neutral-500">Exercise</p>
+                      <h3 className="text-lg font-semibold">
+                        {exercise?.name || item.exerciseId}
+                      </h3>
+                      <p className="text-sm text-neutral-600">
+                        Type: {item.type || exercise?.type || "N/A"}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-red-600"
+                      disabled={pending}
+                      onClick={() => {
+                        handleRemove(selectedIndex);
+                        setSelectedIndex(null);
+                      }}
+                    >
+                      Remove from template
+                    </Button>
+                  </>
+                );
+              })()}
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
