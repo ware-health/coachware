@@ -6,6 +6,7 @@ import { createTemplate } from "@/app/actions/templates";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default async function PlanDetailPage({
   params
@@ -35,6 +36,11 @@ export default async function PlanDetailPage({
     .eq("owner", session?.user.id)
     .order("createdAt", { ascending: false });
 
+  const createTemplateAction = async (formData: FormData) => {
+    "use server";
+    await createTemplate(formData);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
@@ -45,16 +51,87 @@ export default async function PlanDetailPage({
             <p className="text-sm text-neutral-600">{plan.notes}</p>
           ) : null}
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/plans">Back to plans</Link>
-        </Button>
+        <CreateTemplateCard
+          planId={params.planId}
+          action={createTemplateAction}
+          rounded
+        />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Create template</h2>
-          <form action={createTemplate} className="space-y-3 border border-black p-4">
-            <input type="hidden" name="planId" value={params.planId} />
+      <div className="space-y-3">
+        <div className="overflow-hidden rounded-lg border border-neutral-300">
+          <div className="min-w-full overflow-x-auto">
+            <table className="min-w-full divide-y divide-neutral-200">
+              <thead className="bg-neutral-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Notes
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 bg-white">
+                {templates && templates.length > 0 ? (
+                  templates.map((template: RoutineTemplate) => (
+                    <tr key={template.id} className="hover:bg-neutral-50">
+                      <td className="relative px-4 py-3 text-sm font-semibold text-neutral-900">
+                        <Link
+                          href={`/plans/${params.planId}/templates/${template.id}`}
+                          className="absolute inset-0"
+                          aria-label={`Open ${template.name}`}
+                        />
+                        {template.name}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">
+                        {template.notes || "—"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="px-4 py-4 text-sm text-neutral-600">
+                      No templates yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateTemplateCard({
+  planId,
+  action,
+  rounded
+}: {
+  planId: string;
+  action: (formData: FormData) => Promise<void>;
+  rounded?: boolean;
+}) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="default"
+          className={rounded ? "rounded-md px-4 py-2" : ""}
+        >
+          + New template
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[28rem]">
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs uppercase text-neutral-500">Create</p>
+            <h3 className="text-lg font-semibold">New template</h3>
+          </div>
+          <form action={action} className="space-y-3">
+            <input type="hidden" name="planId" value={planId} />
             <div className="space-y-2">
               <label className="text-sm font-medium">Name</label>
               <Input name="name" required placeholder="Upper Body" />
@@ -63,36 +140,13 @@ export default async function PlanDetailPage({
               <label className="text-sm font-medium">Notes</label>
               <Textarea name="notes" placeholder="Optional notes" />
             </div>
-            <Button type="submit">Create template</Button>
+            <Button type="submit" className="w-full">
+              Create template
+            </Button>
           </form>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Templates</h2>
-          <div className="space-y-2">
-            {templates && templates.length > 0 ? (
-              templates.map((template: RoutineTemplate) => (
-                <Link
-                  key={template.id}
-                  href={`/plans/${params.planId}/templates/${template.id}`}
-                  className="flex items-center justify-between border border-black px-4 py-3 hover:bg-neutral-100"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{template.name}</p>
-                    {template.notes ? (
-                      <p className="text-xs text-neutral-600">{template.notes}</p>
-                    ) : null}
-                  </div>
-                  <span className="text-xs uppercase text-neutral-500">Open</span>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-neutral-600">No templates yet.</p>
-            )}
-          </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

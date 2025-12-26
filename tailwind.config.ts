@@ -11,12 +11,6 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"]
-      },
-      borderRadius: {
-        DEFAULT: "0",
-        lg: "0",
-        md: "0",
-        sm: "0"
       }
     }
   },

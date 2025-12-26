@@ -23,7 +23,7 @@ export default async function DashboardLayout({
   const email = session?.user?.email || undefined;
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-white text-neutral-900">
       <Sidebar email={email} />
       <main className="ml-60 flex min-h-screen flex-col">
         <div className="flex-1 px-8 py-6">{children}</div>

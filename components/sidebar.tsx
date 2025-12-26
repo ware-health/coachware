@@ -22,12 +22,8 @@ export function Sidebar({ email }: { email?: string }) {
         <img
           src="/brand-logos/logo.svg"
           alt="Coachware logo"
-          className="h-10 w-auto invert"
+          className="h-8 w-auto invert"
         />
-        <div>
-          <p className="text-sm uppercase tracking-wide text-neutral-600">Coachware</p>
-          <p className="text-base font-semibold">Fitness Admin</p>
-        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-2">
         {links.map((link) => (
@@ -35,8 +31,8 @@ export function Sidebar({ email }: { email?: string }) {
             key={link.href}
             href={link.href}
             className={cn(
-              "px-3 py-2 text-sm font-medium hover:bg-neutral-100",
-              pathname.startsWith(link.href) && "bg-black text-white"
+              "rounded-md px-3 py-2 text-sm font-medium hover:bg-neutral-100",
+              pathname.startsWith(link.href) && "bg-neutral-900 text-white"
             )}
           >
             {link.label}

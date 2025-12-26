@@ -40,7 +40,7 @@ export function AnimationPreview({
 
   if (animationData) {
     return (
-      <div className="flex h-40 items-center justify-center border-b border-black bg-white">
+      <div className="flex h-40 items-center justify-center border-b border-neutral-200 bg-white">
         <Lottie animationData={animationData} loop className="h-36 w-full" />
       </div>
     );

@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4">
-      <div className="w-full max-w-md space-y-8 border border-black bg-white p-8">
+      <div className="w-full max-w-md space-y-8 rounded-lg border border-neutral-300 bg-white p-8">
         <div className="space-y-3 text-left">
           <img
             src="/brand-logos/logo.svg"

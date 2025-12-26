@@ -82,7 +82,7 @@ export function ExerciseGrid({
               <SheetTrigger asChild>
                 <button
                   onClick={() => setSelected(exercise)}
-                  className="flex h-full flex-col border border-black bg-white text-left"
+                  className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-300 bg-white text-left"
                 >
                   <AnimationPreview
                     animationUrl={exercise.animationUrl}
@@ -90,9 +90,6 @@ export function ExerciseGrid({
                   />
                   <div className="p-3">
                     <p className="text-sm font-semibold">{exercise.name}</p>
-                    <p className="text-xs text-neutral-600">
-                      {exercise.isSystem ? "System" : "Custom"}
-                    </p>
                   </div>
                 </button>
               </SheetTrigger>

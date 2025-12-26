@@ -38,17 +38,15 @@ export default async function TemplateDetailPage({
     const {
       data: { session }
     } = await supabase.auth.getSession();
-    if (!session) return { error: "Not authenticated" };
+    if (!session) return;
 
-    const { error } = await supabase
+    await supabase
       .from("routine_templates")
       .update({ name, notes })
       .eq("id", params.templateId)
       .eq("owner", session.user.id);
 
-    if (error) return { error: error.message };
     revalidatePath(`/plans/${params.planId}/templates/${params.templateId}`);
-    return { success: true };
   };
 
   return (
@@ -69,7 +67,10 @@ export default async function TemplateDetailPage({
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Template details</h2>
-          <form action={updateMeta} className="space-y-3 border border-black p-4">
+          <form
+            action={updateMeta}
+            className="space-y-3 rounded-lg border border-neutral-300 p-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium">Name</label>
               <Input name="name" defaultValue={template.name} required />

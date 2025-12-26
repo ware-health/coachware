@@ -11,9 +11,9 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  default: "bg-black text-white hover:bg-neutral-800",
-  outline: "border border-black bg-white text-black hover:bg-neutral-100",
-  ghost: "text-black hover:bg-neutral-100"
+  default: "bg-neutral-900 text-white hover:bg-neutral-800",
+  outline: "border border-neutral-800 bg-white text-neutral-900 hover:bg-neutral-100",
+  ghost: "text-neutral-900 hover:bg-neutral-100"
 };
 
 const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
