@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Exercise } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 type Props = {
   exercises: Exercise[];
   allowAdd?: boolean;
-  onAdd?: (exercise: Exercise) => void;
+  onAdd?: (exercise: Exercise, type: Exercise["type"]) => void;
   pageSize?: number;
 };
 
@@ -23,6 +23,19 @@ export function ExerciseGrid({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Exercise | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedType, setSelectedType] = useState<Exercise["type"]>("WR");
+
+  useEffect(() => {
+    if (selected) {
+      setSelectedType(selected.type || "WR");
+    }
+  }, [selected]);
+
+  const typeOptions: { value: Exercise["type"]; label: string }[] = [
+    { value: "WR", label: "Weights & reps" },
+    { value: "BW", label: "Reps only (bodyweight)" },
+    { value: "DR", label: "Duration" }
+  ];
 
   const filtered = useMemo(() => {
     const list = exercises.filter((ex) =>
@@ -123,7 +136,7 @@ export function ExerciseGrid({
       >
         {selected ? (
           <SheetContent side="right" className="w-96">
-            <div className="space-y-4">
+            <div className="flex h-full flex-col gap-4">
               <div className="space-y-1">
                 <p className="text-xs uppercase text-neutral-500">Exercise</p>
                 <h2 className="text-xl font-semibold">{selected.name}</h2>
@@ -137,17 +150,36 @@ export function ExerciseGrid({
               ) : (
                 <p className="text-sm text-neutral-500">No notes provided.</p>
               )}
-              <Button
-                className="w-full"
-                disabled={!allowAdd}
-                onClick={() => {
-                  if (!allowAdd || !selected) return;
-                  onAdd?.(selected);
-                  setSelected(null);
-                }}
-              >
-                {allowAdd ? "Add to template" : "Open a template to add"}
-              </Button>
+              {allowAdd ? (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-neutral-800">
+                    Logging type
+                  </label>
+                  <select
+                    className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value as Exercise["type"])}
+                  >
+                    {typeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+              {allowAdd ? (
+                <Button
+                  className="mt-auto w-full"
+                  onClick={() => {
+                    if (!allowAdd || !selected) return;
+                    onAdd?.(selected, selectedType);
+                    setSelected(null);
+                  }}
+                >
+                  Add to template
+                </Button>
+              ) : null}
             </div>
           </SheetContent>
         ) : null}

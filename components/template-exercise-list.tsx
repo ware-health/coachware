@@ -100,43 +100,41 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
       </div>
 
       <Sheet open={selectedIndex !== null} onOpenChange={(open) => !open && setSelectedIndex(null)}>
-        <SheetContent side="right" className="w-[22rem]">
+        <SheetContent side="right" className="w-96">
           {selectedIndex !== null ? (
-            <div className="space-y-4">
+            <div className="flex h-full flex-col gap-4">
               {(() => {
                 const item = exercises[selectedIndex];
                 const exercise = exerciseMap[item.exerciseId];
                 return (
-                  <>
-                    <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-                      <AnimationPreview
-                        animationUrl={exercise?.animationUrl}
-                        name={exercise?.name || item.exerciseId}
-                      />
-                    </div>
+                  <div className="space-y-4">
                     <div className="space-y-1">
                       <p className="text-xs uppercase text-neutral-500">Exercise</p>
-                      <h3 className="text-lg font-semibold">
+                      <h2 className="text-xl font-semibold">
                         {exercise?.name || item.exerciseId}
-                      </h3>
-                      <p className="text-sm text-neutral-600">
-                        Type: {item.type || exercise?.type || "N/A"}
-                      </p>
+                      </h2>
                     </div>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-red-600"
-                      disabled={pending}
-                      onClick={() => {
-                        handleRemove(selectedIndex);
-                        setSelectedIndex(null);
-                      }}
-                    >
-                      Remove from template
-                    </Button>
-                  </>
+                    <AnimationPreview
+                      animationUrl={exercise?.animationUrl}
+                      name={exercise?.name || item.exerciseId}
+                    />
+                    <p className="text-sm text-neutral-700">
+                      Type: {item.type || exercise?.type || "N/A"}
+                    </p>
+                  </div>
                 );
               })()}
+              <Button
+                variant="default"
+                className="mt-auto w-full bg-red-600 text-white hover:bg-red-500"
+                disabled={pending}
+                onClick={() => {
+                  handleRemove(selectedIndex as number);
+                  setSelectedIndex(null);
+                }}
+              >
+                Remove from template
+              </Button>
             </div>
           ) : null}
         </SheetContent>
