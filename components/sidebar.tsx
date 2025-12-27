@@ -8,6 +8,7 @@ import { useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 const links = [
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/library", label: "Library" },
   { href: "/plans", label: "Plans" },
   { href: "/clients", label: "Clients" }
