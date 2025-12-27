@@ -41,6 +41,9 @@ export default async function PlanDetailPage({
     await createTemplate(formData);
   };
 
+  const formatDate = (value: string | null) =>
+    value ? new Date(value).toLocaleDateString() : "—";
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
@@ -70,6 +73,12 @@ export default async function PlanDetailPage({
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                     Notes
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Created
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                    Updated
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 bg-white">
@@ -87,11 +96,17 @@ export default async function PlanDetailPage({
                       <td className="px-4 py-3 text-sm text-neutral-600">
                         {template.notes || "—"}
                       </td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">
+                        {formatDate(template.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">
+                        {formatDate(template.updatedAt)}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} className="px-4 py-4 text-sm text-neutral-600">
+                    <td colSpan={4} className="px-4 py-4 text-sm text-neutral-600">
                       No templates yet.
                     </td>
                   </tr>

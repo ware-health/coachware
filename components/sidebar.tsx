@@ -17,7 +17,7 @@ export function Sidebar({ email }: { email?: string }) {
   const [pending, startTransition] = useTransition();
 
   return (
-    <aside className="fixed left-0 top-0 flex h-full w-60 flex-col border-r border-black bg-white px-4 py-6">
+    <aside className="fixed left-0 top-0 flex h-full w-60 flex-col border-r border-black border-r-neutral-300 bg-white px-4 py-6">
       <div className="mb-8 space-y-2">
         <img
           src="/brand-logos/logo.svg"
