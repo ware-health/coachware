@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { exerciseLibrary } from "@/data/exercises";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BarChartIcon, LayersIcon, PersonIcon, RocketIcon } from "@radix-ui/react-icons";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -49,24 +50,33 @@ export default async function DashboardPage() {
   const clientsCount = clientsCountExact ?? recentClients.length;
 
   const cards = [
-    { label: "Exercises", value: exercisesCount, hint: "From library", accent: "bg-blue-100 text-blue-800" },
     {
-      label: "Plans",
-      value: plansTotal,
-      hint: "Not client-linked",
-      accent: "bg-green-100 text-green-800"
+      label: "Total clients",
+      value: clientsCount,
+      hint: "All active clients",
+      icon: <PersonIcon className="h-5 w-5" />,
+      accent: "bg-sky-100 text-sky-700"
     },
     {
       label: "Client plans",
       value: clientPlansTotal,
-      hint: "Plans assigned to clients",
-      accent: "bg-purple-100 text-purple-800"
+      hint: "Assigned plans",
+      icon: <LayersIcon className="h-5 w-5" />,
+      accent: "bg-violet-100 text-violet-700"
     },
     {
-      label: "Clients",
-      value: clientsCount,
-      hint: "Recent clients",
-      accent: "bg-amber-100 text-amber-800"
+      label: "Standalone plans",
+      value: plansTotal,
+      hint: "Not client-linked",
+      icon: <RocketIcon className="h-5 w-5" />,
+      accent: "bg-emerald-100 text-emerald-700"
+    },
+    {
+      label: "Exercises",
+      value: exercisesCount,
+      hint: "From library",
+      icon: <BarChartIcon className="h-5 w-5" />,
+      accent: "bg-amber-100 text-amber-700"
     }
   ];
 
@@ -101,15 +111,20 @@ export default async function DashboardPage() {
         {cards.map((card) => (
           <div
             key={card.label}
-            className="rounded-lg border border-neutral-200 bg-white px-4 py-5 shadow-sm"
+            className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white px-4 py-4 shadow-sm"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase text-neutral-500">{card.label}</p>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${card.accent}`}>
-                {card.hint}
-              </span>
+            <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${card.accent}`}>
+              {card.icon}
             </div>
-            <p className="mt-2 text-3xl font-semibold text-neutral-900">{card.value}</p>
+            <div className="flex flex-1 flex-col">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-neutral-600">{card.label}</p>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-semibold text-neutral-900">{card.value}</p>
+                {card.hint ? <span className="text-xs text-neutral-500">{card.hint}</span> : null}
+              </div>
+            </div>
           </div>
         ))}
       </div>
