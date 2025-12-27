@@ -1,11 +1,34 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ClientsPage() {
-  const placeholderClients = [
-    { id: "client-1", name: "Jane Doe", email: "jane@example.com", status: "Active" },
-    { id: "client-2", name: "John Smith", email: "john@example.com", status: "Invited" },
-    { id: "client-3", name: "Alex Lee", email: "alex@example.com", status: "Inactive" }
-  ];
+const formatDate = (value: string | null | undefined) =>
+  value
+    ? new Date(value).toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      })
+    : "—";
+
+export default async function ClientsPage() {
+  const supabase = await createClient();
+  if (!supabase) {
+    redirect("/login");
+  }
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("id, name, email, created_at")
+    .order("created_at", { ascending: false });
 
   return (
     <div className="space-y-6">
@@ -27,23 +50,28 @@ export default function ClientsPage() {
                   Email
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                  Status
+                  Created
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 bg-white">
-                {placeholderClients.map((client, idx) => (
-                  <tr key={`${client.email}-${idx}`} className="hover:bg-neutral-50 relative">
-                    <Link
-                      href={`/clients/${client.id}`}
-                      className="absolute inset-0"
-                      aria-label={`Open ${client.name}`}
-                    />
+              {clients && clients.length > 0 ? (
+                clients.map((client) => (
+                  <tr key={client.id} className="hover:bg-neutral-50 relative">
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">{client.name}</td>
                     <td className="px-4 py-3 text-sm text-neutral-700">{client.email}</td>
-                    <td className="px-4 py-3 text-sm text-neutral-600">{client.status}</td>
+                    <td className="px-4 py-3 text-sm text-neutral-600">
+                      {formatDate(client.created_at as string | null | undefined)}
+                    </td>
                   </tr>
-                ))}
+                ))
+              ) : (
+                <tr>
+                  <td className="px-4 py-4 text-sm text-neutral-600" colSpan={3}>
+                    No clients yet.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

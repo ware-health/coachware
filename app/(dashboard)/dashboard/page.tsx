@@ -4,13 +4,6 @@ import { exerciseLibrary } from "@/data/exercises";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-type PlanSummary = {
-  id: string;
-  name: string;
-  notes: string | null;
-  updatedAt: string | null;
-};
-
 export default async function DashboardPage() {
   const supabase = await createClient();
   if (!supabase) {
@@ -29,39 +22,53 @@ export default async function DashboardPage() {
 
   const [
     { count: plansCount, data: plansData },
-    { data: clientLinksData },
-    { data: recentPlans }
+    { count: clientPlansCount },
+    { data: clientsData, count: clientsCountExact }
   ] = await Promise.all([
     supabase
       .from("routine_plans")
       .select("*", { count: "exact" })
-      .eq("owner", ownerId),
-    supabase.from("client_plans").select("clientId, planId").eq("owner", ownerId),
+      .eq("owner", ownerId)
+      .is("clientId", null),
     supabase
       .from("routine_plans")
-      .select("id, name, notes, updatedAt")
+      .select("*", { head: true, count: "exact" })
       .eq("owner", ownerId)
-      .order("createdAt", { ascending: false })
+      .not("clientId", "is", null),
+    supabase
+      .from("clients")
+      .select("id, email, name, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
       .limit(5)
   ]);
 
   const exercisesCount = exerciseLibrary.length;
   const plansTotal = plansCount ?? plansData?.length ?? 0;
-  const clientLinkRows = clientLinksData || [];
-  const clientIds = Array.from(new Set(clientLinkRows.map((row: any) => row.clientId))).filter(
-    Boolean
-  );
-  const clientsCount = clientIds.length;
-  const linkedPlansCount = clientLinkRows.length;
+  const clientPlansTotal = clientPlansCount ?? 0;
+  const recentClients = clientsData || [];
+  const clientsCount = clientsCountExact ?? recentClients.length;
 
   const cards = [
     { label: "Exercises", value: exercisesCount, hint: "From library", accent: "bg-blue-100 text-blue-800" },
-    { label: "Plans", value: plansTotal, hint: "Owned by you", accent: "bg-green-100 text-green-800" },
-    { label: "Client plans", value: linkedPlansCount, hint: "Linked via client_plans", accent: "bg-purple-100 text-purple-800" },
-    { label: "Clients", value: clientsCount, hint: "Distinct linked clients", accent: "bg-amber-100 text-amber-800" }
+    {
+      label: "Plans",
+      value: plansTotal,
+      hint: "Not client-linked",
+      accent: "bg-green-100 text-green-800"
+    },
+    {
+      label: "Client plans",
+      value: clientPlansTotal,
+      hint: "Plans assigned to clients",
+      accent: "bg-purple-100 text-purple-800"
+    },
+    {
+      label: "Clients",
+      value: clientsCount,
+      hint: "Recent clients",
+      accent: "bg-amber-100 text-amber-800"
+    }
   ];
-
-  const recentPlanList: PlanSummary[] = recentPlans || [];
 
   return (
     <div className="space-y-8">
@@ -125,28 +132,36 @@ export default async function DashboardPage() {
                   Client
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                  Linked plan
+                  Email
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                  Created
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 bg-white">
-              {clientLinkRows.length > 0 ? (
-                clientLinkRows.slice(0, 5).map((link: any, idx: number) => (
-                  <tr key={`${link.planId}-${idx}`} className="hover:bg-neutral-50">
-                    <td className="px-4 py-3 text-sm text-neutral-900">
-                      {link.clientId || "Client"}
-                    </td>
+              {recentClients.length > 0 ? (
+                recentClients.slice(0, 5).map((client: any) => (
+                  <tr key={client.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
-                      <Link href={`/plans/${link.planId}`} className="hover:underline">
-                        {link.planId}
-                      </Link>
+                      {client.name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-neutral-700">{client.email}</td>
+                    <td className="px-4 py-3 text-sm text-neutral-600">
+                      {client.created_at
+                        ? new Date(client.created_at as string).toLocaleDateString(undefined, {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          })
+                        : "—"}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td className="px-4 py-4 text-sm text-neutral-600" colSpan={2}>
-                    No client links yet. Create a client plan to see it here.
+                  <td className="px-4 py-4 text-sm text-neutral-600" colSpan={3}>
+                    No clients yet. Add a client to see them here.
                   </td>
                 </tr>
               )}

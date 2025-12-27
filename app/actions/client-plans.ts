@@ -24,23 +24,13 @@ export async function createClientPlan(formData: FormData) {
     .insert({
       name,
       notes,
-      owner: session.user.id
+      owner: session.user.id,
+      clientId
     })
     .select()
     .single();
 
   if (planError || !plan) return { error: planError?.message || "Plan creation failed" };
-
-  // Link to client
-  const { error: linkError } = await supabase
-    .from("client_plans")
-    .insert({
-      clientId,
-      planId: plan.id,
-      owner: session.user.id
-    });
-
-  if (linkError) return { error: linkError.message };
 
   revalidatePath(`/clients/${clientId}`);
   return { data: plan };

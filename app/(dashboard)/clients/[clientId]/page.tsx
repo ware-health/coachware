@@ -26,31 +26,40 @@ export default async function ClientDetailPage({ params }: Props) {
     redirect("/login");
   }
 
-  // Placeholder client meta (later: fetch from clients table)
-  const clientName = "Placeholder Client";
-  const clientEmail = "client@example.com";
-  const clientStatus = "Active";
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id, name, email, created_at")
+    .eq("id", params.clientId)
+    .single();
 
-  const { data: clientPlans } = await supabase
-    .from("client_plans")
-    .select("plan:routine_plans(*)")
-    .eq("clientId", params.clientId)
+  if (!client) {
+    notFound();
+  }
+
+  const { data: plans } = await supabase
+    .from("routine_plans")
+    .select("*")
     .eq("owner", session.user.id)
+    .eq("clientId", params.clientId)
     .order("createdAt", { ascending: false });
-
-  const plans: RoutinePlan[] =
-    clientPlans
-      ?.map((row: any) => row.plan)
-      .filter((p: RoutinePlan | null) => Boolean(p)) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase text-neutral-500">Client</p>
-          <h1 className="text-2xl font-semibold">{clientName}</h1>
-          <p className="text-sm text-neutral-600">{clientEmail}</p>
-          <p className="text-sm text-neutral-600">Status: {clientStatus}</p>
+          <h1 className="text-2xl font-semibold">{client.name}</h1>
+          <p className="text-sm text-neutral-600">{client.email}</p>
+          <p className="text-sm text-neutral-600">
+            Created:{" "}
+            {client.created_at
+              ? new Date(client.created_at as string).toLocaleDateString(undefined, {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric"
+                })
+              : "—"}
+          </p>
         </div>
         <CreateClientPlanSheet clientId={params.clientId} />
       </div>

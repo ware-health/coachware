@@ -3,6 +3,7 @@ export type RoutinePlan = {
   owner: string;
   name: string;
   notes: string | null;
+  clientId?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
