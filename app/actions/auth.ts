@@ -10,6 +10,7 @@ export async function signInWithEmailPassword(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
+  const ALLOWED_EMAIL = "third-party-integrations@ware.health";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -17,11 +18,15 @@ export async function signInWithEmailPassword(
     return { error: "Supabase env vars are missing" };
   }
 
-  const email = String(formData.get("email") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
     return { error: "Email and password are required" };
+  }
+
+  if (email !== ALLOWED_EMAIL) {
+    return { error: "This account is not allowed to sign in" };
   }
 
   const supabase = await createClient();
@@ -41,7 +46,7 @@ export async function signInWithEmailPassword(
     return { error: error.message };
   }
 
-  redirect("/plans");
+  redirect("/");
 }
 
 export async function signOut() {

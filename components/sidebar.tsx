@@ -41,7 +41,7 @@ export function Sidebar({ email }: { email?: string }) {
           </Link>
         ))}
       </nav>
-      <div className="space-y-2 border-t border-black pt-4 text-sm">
+      <div className="space-y-2 pt-4 text-sm">
         <p className="text-xs text-neutral-600">{email || "Signed in"}</p>
         <form
           action={() => {

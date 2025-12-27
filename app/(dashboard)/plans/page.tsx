@@ -14,13 +14,13 @@ export default async function PlansPage() {
   }
 
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const { data: plans } = await supabase
     .from("routine_plans")
     .select("*")
-    .eq("owner", session?.user.id)
+    .eq("owner", user?.id)
     .order("createdAt", { ascending: false });
 
   const createPlanAction = async (formData: FormData) => {

@@ -15,14 +15,14 @@ export default async function PlanDetailPage({
 }) {
   const supabase = await createClient();
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const { data: plan } = await supabase
     .from("routine_plans")
     .select("*")
     .eq("id", params.planId)
-    .eq("owner", session?.user.id)
+    .eq("owner", user?.id)
     .single();
 
   if (!plan) {
@@ -33,7 +33,7 @@ export default async function PlanDetailPage({
     .from("routine_templates")
     .select("*")
     .eq("planId", params.planId)
-    .eq("owner", session?.user.id)
+    .eq("owner", user?.id)
     .order("createdAt", { ascending: false });
 
   const createTemplateAction = async (formData: FormData) => {

@@ -25,10 +25,10 @@ export default async function ClientDetailPage({
   }
 
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
@@ -45,7 +45,7 @@ export default async function ClientDetailPage({
   const { data: plans } = await supabase
     .from("routine_plans")
     .select("*")
-    .eq("owner", session.user.id)
+    .eq("owner", user.id)
     .eq("clientId", params.clientId)
     .order("createdAt", { ascending: false });
 

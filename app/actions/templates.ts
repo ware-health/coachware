@@ -1,17 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Exercise, ExerciseSet, TemplateExercise } from "@/lib/types";
 import { exerciseMap } from "@/data/exercises";
 
 async function getSessionAndClient() {
   const supabase = await createClient();
-  if (!supabase) return { supabase: null, session: null };
+  if (!supabase) return { supabase: null, user: null };
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
-  return { supabase, session };
+    data: { user }
+  } = await supabase.auth.getUser();
+  return { supabase, user };
 }
 
 const defaultSet = (): ExerciseSet => ({
@@ -75,8 +76,8 @@ export async function createTemplate(formData: FormData) {
 
   if (!name || !planId) return { error: "Name and plan are required" };
 
-  const { supabase, session } = await getSessionAndClient();
-  if (!session || !supabase) return { error: "Not authenticated" };
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
 
   const { data, error } = await supabase
     .from("routine_templates")
@@ -84,7 +85,7 @@ export async function createTemplate(formData: FormData) {
       name,
       notes,
       planId,
-      owner: session.user.id,
+      owner: user.id,
       exercises: []
     })
     .select()
@@ -93,7 +94,7 @@ export async function createTemplate(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath(`/plans/${planId}`);
-  return { data };
+  redirect(`/plans/${planId}`);
 }
 
 export async function updateTemplateMeta(templateId: string, payload: {
@@ -101,8 +102,8 @@ export async function updateTemplateMeta(templateId: string, payload: {
   notes?: string;
   planId: string;
 }) {
-  const { supabase, session } = await getSessionAndClient();
-  if (!session || !supabase) return { error: "Not authenticated" };
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
 
   const { error } = await supabase
     .from("routine_templates")
@@ -111,7 +112,7 @@ export async function updateTemplateMeta(templateId: string, payload: {
       notes: payload.notes
     })
     .eq("id", templateId)
-    .eq("owner", session.user.id);
+    .eq("owner", user.id);
 
   if (error) return { error: error.message };
   revalidatePath(`/plans/${payload.planId}/templates/${templateId}`);
@@ -125,14 +126,14 @@ export async function addExerciseToTemplate(args: {
   type?: Exercise["type"];
   notes?: string;
 }) {
-  const { supabase, session } = await getSessionAndClient();
-  if (!session || !supabase) return { error: "Not authenticated" };
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
 
   const { data: template, error: fetchError } = await supabase
     .from("routine_templates")
     .select("exercises, owner")
     .eq("id", args.templateId)
-    .eq("owner", session.user.id)
+    .eq("owner", user.id)
     .single();
 
   if (fetchError) return { error: fetchError.message };
@@ -156,7 +157,7 @@ export async function addExerciseToTemplate(args: {
     .from("routine_templates")
     .update({ exercises })
     .eq("id", args.templateId)
-    .eq("owner", session.user.id);
+    .eq("owner", user.id);
 
   if (error) return { error: error.message };
   revalidatePath(`/plans/${args.planId}/templates/${args.templateId}`);
@@ -168,14 +169,14 @@ export async function removeExerciseFromTemplate(args: {
   planId: string;
   index: number;
 }) {
-  const { supabase, session } = await getSessionAndClient();
-  if (!session) return { error: "Not authenticated" };
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
 
   const { data: template, error: fetchError } = await supabase
     .from("routine_templates")
     .select("exercises")
     .eq("id", args.templateId)
-    .eq("owner", session.user.id)
+    .eq("owner", user.id)
     .single();
 
   if (fetchError) return { error: fetchError.message };
@@ -191,7 +192,7 @@ export async function removeExerciseFromTemplate(args: {
     .from("routine_templates")
     .update({ exercises })
     .eq("id", args.templateId)
-    .eq("owner", session.user.id);
+    .eq("owner", user.id);
 
   if (error) return { error: error.message };
   revalidatePath(`/plans/${args.planId}/templates/${args.templateId}`);
@@ -204,14 +205,14 @@ export async function moveExerciseInTemplate(args: {
   from: number;
   to: number;
 }) {
-  const { supabase, session } = await getSessionAndClient();
-  if (!session) return { error: "Not authenticated" };
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
 
   const { data: template, error: fetchError } = await supabase
     .from("routine_templates")
     .select("exercises")
     .eq("id", args.templateId)
-    .eq("owner", session.user.id)
+    .eq("owner", user.id)
     .single();
 
   if (fetchError) return { error: fetchError.message };
@@ -233,7 +234,7 @@ export async function moveExerciseInTemplate(args: {
     .from("routine_templates")
     .update({ exercises })
     .eq("id", args.templateId)
-    .eq("owner", session.user.id);
+    .eq("owner", user.id);
 
   if (error) return { error: error.message };
   revalidatePath(`/plans/${args.planId}/templates/${args.templateId}`);

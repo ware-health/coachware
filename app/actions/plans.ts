@@ -11,16 +11,16 @@ export async function createPlan(formData: FormData) {
   const supabase = await createClient();
   if (!supabase) return { error: "Supabase unavailable" };
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
-  if (!session) return { error: "Not authenticated" };
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
 
   const { data, error } = await supabase
     .from("routine_plans")
     .insert({
       name,
       notes,
-      owner: session.user.id
+      owner: user.id
     })
     .select()
     .single();

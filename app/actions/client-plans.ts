@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export async function createClientPlan(formData: FormData) {
@@ -14,9 +15,9 @@ export async function createClientPlan(formData: FormData) {
   if (!supabase) return { error: "Supabase unavailable" };
 
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
-  if (!session) return { error: "Not authenticated" };
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
 
   // Create the routine plan
   const { data: plan, error: planError } = await supabase
@@ -24,7 +25,7 @@ export async function createClientPlan(formData: FormData) {
     .insert({
       name,
       notes,
-      owner: session.user.id,
+      owner: user.id,
       clientId
     })
     .select()
@@ -33,7 +34,7 @@ export async function createClientPlan(formData: FormData) {
   if (planError || !plan) return { error: planError?.message || "Plan creation failed" };
 
   revalidatePath(`/clients/${clientId}`);
-  return { data: plan };
+  redirect(`/clients/${clientId}`);
 }
 
 

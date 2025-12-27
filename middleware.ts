@@ -28,10 +28,10 @@ export async function middleware(req: NextRequest) {
   );
 
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     const redirectUrl = new URL("/login", req.url);
     redirectUrl.searchParams.set("redirect", req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);

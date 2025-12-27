@@ -12,13 +12,7 @@ export default function LoginPage() {
             className="h-10 w-auto invert"
           />
           <div className="space-y-1">
-            <p className="text-sm uppercase tracking-wide text-neutral-600">
-              Coachware Admin
-            </p>
             <h1 className="text-2xl font-semibold">Sign in</h1>
-            <p className="text-sm text-neutral-600">
-              Use your admin email and password.
-            </p>
           </div>
         </div>
         <SignInForm />

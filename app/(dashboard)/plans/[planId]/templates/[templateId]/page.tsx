@@ -13,15 +13,15 @@ export default async function TemplateDetailPage({
 }) {
   const supabase = await createClient();
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const { data: template } = await supabase
     .from("routine_templates")
     .select("*")
     .eq("id", params.templateId)
     .eq("planId", params.planId)
-    .eq("owner", session?.user.id)
+    .eq("owner", user?.id)
     .single();
 
   if (!template) {
@@ -34,15 +34,15 @@ export default async function TemplateDetailPage({
     const notes = String(formData.get("notes") || "").trim();
     const supabase = await createClient();
     const {
-      data: { session }
-    } = await supabase.auth.getSession();
-    if (!session) return;
+      data: { user }
+    } = await supabase.auth.getUser();
+    if (!user) return;
 
     await supabase
       .from("routine_templates")
       .update({ name, notes })
       .eq("id", params.templateId)
-      .eq("owner", session.user.id);
+      .eq("owner", user.id);
 
     revalidatePath(`/plans/${params.planId}/templates/${params.templateId}`);
   };
