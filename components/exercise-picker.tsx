@@ -33,7 +33,7 @@ export function ExercisePicker({
           {label}
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[28rem]">
+      <SheetContent side="right" className="w-full sm:max-w-lg md:max-w-xl">
         <div className="space-y-4">
           <div>
             <p className="text-xs uppercase text-neutral-500">Add to template</p>

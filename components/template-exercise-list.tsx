@@ -53,15 +53,15 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                 Type
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                Notes
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-200 bg-white">
             {exercises.length === 0 ? (
               <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-4 text-sm text-neutral-600"
-                >
+                <td colSpan={4} className="px-4 py-4 text-sm text-neutral-600">
                   No exercises yet.
                 </td>
               </tr>
@@ -102,6 +102,13 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                     </td>
                     <td className="px-4 py-3 text-sm text-neutral-600">
                       {formatType(item.exercise?.type || exercise?.type)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-neutral-600">
+                      {item.notes ? (
+                        <span className="line-clamp-2">{item.notes}</span>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 );
