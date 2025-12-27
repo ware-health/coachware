@@ -57,8 +57,16 @@ export default async function ClientsPage() {
             <tbody className="divide-y divide-neutral-200 bg-white">
               {clients && clients.length > 0 ? (
                 clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-neutral-50 relative">
-                    <td className="px-4 py-3 text-sm font-semibold text-neutral-900">{client.name}</td>
+                  <tr key={client.id} className="hover:bg-neutral-50">
+                    <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
+                      <Link
+                        href={`/clients/${client.id}?createPlan=1`}
+                        className="hover:underline"
+                        aria-label={`Open ${client.name}`}
+                      >
+                        {client.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-sm text-neutral-700">{client.email}</td>
                     <td className="px-4 py-3 text-sm text-neutral-600">
                       {formatDate(client.created_at as string | null | undefined)}

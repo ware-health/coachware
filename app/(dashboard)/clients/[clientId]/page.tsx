@@ -12,7 +12,13 @@ type Props = {
   params: { clientId: string };
 };
 
-export default async function ClientDetailPage({ params }: Props) {
+export default async function ClientDetailPage({
+  params,
+  searchParams
+}: {
+  params: { clientId: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = await createClient();
   if (!supabase) {
     redirect("/login");
@@ -43,6 +49,8 @@ export default async function ClientDetailPage({ params }: Props) {
     .eq("clientId", params.clientId)
     .order("createdAt", { ascending: false });
 
+  const openCreate = searchParams?.createPlan === "1";
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -61,7 +69,7 @@ export default async function ClientDetailPage({ params }: Props) {
               : "—"}
           </p>
         </div>
-        <CreateClientPlanSheet clientId={params.clientId} />
+        <CreateClientPlanSheet clientId={params.clientId} defaultOpen={openCreate} />
       </div>
 
       <div className="overflow-hidden rounded-lg border border-neutral-300">
@@ -121,9 +129,15 @@ export default async function ClientDetailPage({ params }: Props) {
   );
 }
 
-function CreateClientPlanSheet({ clientId }: { clientId: string }) {
+function CreateClientPlanSheet({
+  clientId,
+  defaultOpen = false
+}: {
+  clientId: string;
+  defaultOpen?: boolean;
+}) {
   return (
-    <Sheet>
+    <Sheet defaultOpen={defaultOpen}>
       <SheetTrigger asChild>
         <Button className="rounded-md px-4 py-2">Create routine plan</Button>
       </SheetTrigger>
