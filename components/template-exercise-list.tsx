@@ -138,6 +138,11 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                     <p className="text-sm text-neutral-700">
                       Type: {formatType(item.exercise?.type || exercise?.type)}
                     </p>
+                    {item.notes ? (
+                      <p className="text-sm text-neutral-700 whitespace-pre-wrap">
+                        Notes: {item.notes}
+                      </p>
+                    ) : null}
                   </div>
                 );
               })()}

@@ -123,6 +123,7 @@ export async function addExerciseToTemplate(args: {
   planId: string;
   exercise: Exercise;
   type?: Exercise["type"];
+  notes?: string;
 }) {
   const { supabase, session } = await getSessionAndClient();
   if (!session || !supabase) return { error: "Not authenticated" };
@@ -144,7 +145,7 @@ export async function addExerciseToTemplate(args: {
       type: args.type ?? args.exercise.type,
       isSystem: args.exercise.isSystem ?? true
     },
-    notes: "",
+    notes: args.notes ?? "",
     superSetId: "",
     sets: [defaultSet()]
   };

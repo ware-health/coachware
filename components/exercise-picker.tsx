@@ -8,7 +8,7 @@ import { ExerciseGrid } from "@/components/exercise-grid";
 
 type Props = {
   exercises: Exercise[];
-  onSelect: (exercise: Exercise, type: Exercise["type"]) => void;
+  onSelect: (exercise: Exercise, type: Exercise["type"], notes: string) => void;
   pageSize?: number;
   rounded?: boolean;
   label?: string;
@@ -43,8 +43,8 @@ export function ExercisePicker({
             exercises={exercises}
             pageSize={pageSize}
             allowAdd
-            onAdd={(exercise, type) => {
-              onSelect(exercise, type);
+            onAdd={(exercise, type, notes) => {
+              onSelect(exercise, type, notes);
               setOpen(false);
             }}
           />

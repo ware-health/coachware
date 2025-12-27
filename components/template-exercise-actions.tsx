@@ -27,13 +27,14 @@ export function TemplateExerciseActions({
         pageSize={12}
         rounded={rounded}
         label="+ Add exercise"
-        onSelect={(exercise, type) => {
+        onSelect={(exercise, type, notes) => {
           startTransition(() => {
             addExerciseToTemplate({
               templateId,
               planId,
               exercise,
-              type
+              type,
+              notes
             });
           });
         }}

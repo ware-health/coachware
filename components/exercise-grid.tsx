@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Exercise } from "@/lib/types";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AnimationPreview } from "@/components/animation-preview";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 type Props = {
   exercises: Exercise[];
   allowAdd?: boolean;
-  onAdd?: (exercise: Exercise, type: Exercise["type"]) => void;
+  onAdd?: (exercise: Exercise, type: Exercise["type"], notes: string) => void;
   pageSize?: number;
 };
 
@@ -24,10 +25,12 @@ export function ExerciseGrid({
   const [selected, setSelected] = useState<Exercise | null>(null);
   const [page, setPage] = useState(1);
   const [selectedType, setSelectedType] = useState<Exercise["type"]>("WR");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (selected) {
       setSelectedType(selected.type || "WR");
+      setNotes("");
     }
   }, [selected]);
 
@@ -139,18 +142,13 @@ export function ExerciseGrid({
                 animationUrl={selected.animationUrl}
                 name={selected.name}
               />
-              {selected.notes ? (
-                <p className="text-sm text-neutral-700">{selected.notes}</p>
-              ) : (
-                <p className="text-sm text-neutral-500">No notes provided.</p>
-              )}
               {allowAdd ? (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-neutral-800">
                     Logging type
                   </label>
                   <select
-                    className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                    className="block w-full appearance-none rounded-md border border-neutral-300 px-3 pr-8 py-2 text-sm text-neutral-900 shadow-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value as Exercise["type"])}
                   >
@@ -163,11 +161,24 @@ export function ExerciseGrid({
                 </div>
               ) : null}
               {allowAdd ? (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-neutral-800">
+                    Notes (optional)
+                  </label>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add coaching cues or context"
+                    className="min-h-[80px]"
+                  />
+                </div>
+              ) : null}
+              {allowAdd ? (
                 <Button
                   className="mt-auto w-full"
                   onClick={() => {
                     if (!allowAdd || !selected) return;
-                    onAdd?.(selected, selectedType);
+                    onAdd?.(selected, selectedType, notes.trim());
                     setSelected(null);
                   }}
                 >
