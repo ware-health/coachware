@@ -60,10 +60,15 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
               </tr>
             ) : (
               exercises.map((item, idx) => {
-                const exercise: Exercise | undefined = exerciseMap[item.exerciseId];
+                const exerciseId =
+                  item.exercise?.id ||
+                  (item as any).exerciseId ||
+                  `exercise-${idx}`;
+                const mapped = exerciseId ? exerciseMap[exerciseId] : undefined;
+                const exercise: Exercise | undefined = item.exercise || mapped;
                 return (
                   <tr
-                    key={`${item.exerciseId}-${idx}`}
+                    key={`${exerciseId}-${idx}`}
                     className={`cursor-pointer hover:bg-neutral-50 ${dragIndex === idx ? "bg-neutral-100" : ""}`}
                     draggable
                     onDragStart={() => setDragIndex(idx)}
@@ -80,16 +85,16 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                       <div className="flex h-12 w-12 items-center justify-center">
                         <AnimationPreview
                           animationUrl={exercise?.animationUrl}
-                          name={exercise?.name || item.exerciseId}
+                          name={exercise?.name || exerciseId}
                           size="sm"
                         />
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
-                      {exercise?.name || item.exerciseId}
+                      {exercise?.name || exerciseId}
                     </td>
                     <td className="px-4 py-3 text-sm text-neutral-600">
-                      {item.type || exercise?.type || "N/A"}
+                      {item.exercise?.type || exercise?.type || "N/A"}
                     </td>
                   </tr>
                 );
@@ -105,21 +110,26 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
             <div className="flex h-full flex-col gap-4">
               {(() => {
                 const item = exercises[selectedIndex];
-                const exercise = exerciseMap[item.exerciseId];
+                const exerciseId =
+                  item.exercise?.id ||
+                  (item as any).exerciseId ||
+                  `exercise-${selectedIndex}`;
+                const mapped = exerciseId ? exerciseMap[exerciseId] : undefined;
+                const exercise = item.exercise || mapped;
                 return (
                   <div className="space-y-4">
                     <div className="space-y-1">
                       <p className="text-xs uppercase text-neutral-500">Exercise</p>
                       <h2 className="text-xl font-semibold">
-                        {exercise?.name || item.exerciseId}
+                        {exercise?.name || exerciseId}
                       </h2>
                     </div>
                     <AnimationPreview
                       animationUrl={exercise?.animationUrl}
-                      name={exercise?.name || item.exerciseId}
+                      name={exercise?.name || exerciseId}
                     />
                     <p className="text-sm text-neutral-700">
-                      Type: {item.type || exercise?.type || "N/A"}
+                      Type: {item.exercise?.type || exercise?.type || "N/A"}
                     </p>
                   </div>
                 );

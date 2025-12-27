@@ -7,10 +7,21 @@ export type RoutinePlan = {
   updatedAt: string | null;
 };
 
+export type ExerciseSet = {
+  reps: number;
+  value1: number;
+  value2: number;
+  weight: number;
+  checked: boolean;
+};
+
 export type TemplateExercise = {
-  exerciseId: string;
-  type?: "WR" | "BW" | "DR";
-  notes?: string;
+  exercise: Exercise & {
+    primaryMuscleGroup?: string;
+  };
+  sets: ExerciseSet[];
+  notes: string;
+  superSetId?: string;
 };
 
 export type RoutineTemplate = {
@@ -29,7 +40,8 @@ export type Exercise = {
   name: string;
   type: "WR" | "BW" | "DR";
   notes?: string;
-  isSystem: boolean;
+  primaryMuscleGroup?: string;
+  isSystem?: boolean;
   animationUrl?: string | null;
 };
 

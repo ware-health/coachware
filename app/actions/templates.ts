@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { TemplateExercise } from "@/lib/types";
+import { Exercise, ExerciseSet, TemplateExercise } from "@/lib/types";
+import { exerciseMap } from "@/data/exercises";
 
 async function getSessionAndClient() {
   const supabase = await createClient();
@@ -12,6 +13,60 @@ async function getSessionAndClient() {
   } = await supabase.auth.getSession();
   return { supabase, session };
 }
+
+const defaultSet = (): ExerciseSet => ({
+  reps: 0,
+  value1: 0,
+  value2: 0,
+  weight: 0,
+  checked: false
+});
+
+const normalizeExercise = (raw: any): TemplateExercise => {
+  const rawExercise = raw?.exercise || null;
+  const exerciseId = raw?.exerciseId || rawExercise?.id || "";
+  const libraryExercise = exerciseId ? exerciseMap[exerciseId] : undefined;
+
+  const exercise: Exercise = {
+    id: exerciseId,
+    name: rawExercise?.name || libraryExercise?.name || exerciseId || "Exercise",
+    type: rawExercise?.type || raw?.type || libraryExercise?.type || "WR",
+    notes: rawExercise?.notes || raw?.notes || "",
+    primaryMuscleGroup: rawExercise?.primaryMuscleGroup,
+    isSystem: rawExercise?.isSystem ?? libraryExercise?.isSystem ?? true,
+    animationUrl: rawExercise?.animationUrl ?? libraryExercise?.animationUrl ?? null
+  };
+
+  const sets: ExerciseSet[] = Array.isArray(raw?.sets)
+    ? raw.sets.map((s: any) => ({
+        reps: Number(s?.reps ?? 0),
+        value1: Number(s?.value1 ?? 0),
+        value2: Number(s?.value2 ?? 0),
+        weight: Number(s?.weight ?? 0),
+        checked: Boolean(s?.checked)
+      }))
+    : [defaultSet()];
+
+  return {
+    exercise,
+    notes: raw?.notes ?? "",
+    superSetId: raw?.superSetId ?? "",
+    sets
+  };
+};
+
+const normalizeExercises = (value: unknown): TemplateExercise[] => {
+  if (Array.isArray(value)) return value.map(normalizeExercise);
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.map(normalizeExercise) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 
 export async function createTemplate(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
@@ -66,8 +121,8 @@ export async function updateTemplateMeta(templateId: string, payload: {
 export async function addExerciseToTemplate(args: {
   templateId: string;
   planId: string;
-  exerciseId: string;
-  type?: TemplateExercise["type"];
+  exercise: Exercise;
+  type?: Exercise["type"];
 }) {
   const { supabase, session } = await getSessionAndClient();
   if (!session || !supabase) return { error: "Not authenticated" };
@@ -81,14 +136,20 @@ export async function addExerciseToTemplate(args: {
 
   if (fetchError) return { error: fetchError.message };
 
-  const exercises: TemplateExercise[] = Array.isArray(template?.exercises)
-    ? template.exercises
-    : [];
+  const exercises: TemplateExercise[] = normalizeExercises(template?.exercises);
 
-  exercises.push({
-    exerciseId: args.exerciseId,
-    type: args.type
-  });
+  const exerciseToAdd: TemplateExercise = {
+    exercise: {
+      ...args.exercise,
+      type: args.type ?? args.exercise.type,
+      isSystem: args.exercise.isSystem ?? true
+    },
+    notes: "",
+    superSetId: "",
+    sets: [defaultSet()]
+  };
+
+  exercises.push(exerciseToAdd);
 
   const { error } = await supabase
     .from("routine_templates")
@@ -117,9 +178,7 @@ export async function removeExerciseFromTemplate(args: {
     .single();
 
   if (fetchError) return { error: fetchError.message };
-  const exercises: TemplateExercise[] = Array.isArray(template?.exercises)
-    ? template.exercises
-    : [];
+  const exercises: TemplateExercise[] = normalizeExercises(template?.exercises);
 
   if (args.index < 0 || args.index >= exercises.length) {
     return { error: "Invalid exercise index" };
@@ -155,9 +214,7 @@ export async function moveExerciseInTemplate(args: {
     .single();
 
   if (fetchError) return { error: fetchError.message };
-  const exercises: TemplateExercise[] = Array.isArray(template?.exercises)
-    ? template.exercises
-    : [];
+  const exercises: TemplateExercise[] = normalizeExercises(template?.exercises);
 
   if (
     args.from < 0 ||

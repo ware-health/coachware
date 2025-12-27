@@ -32,7 +32,7 @@ export function TemplateExerciseActions({
             addExerciseToTemplate({
               templateId,
               planId,
-              exerciseId: exercise.id,
+              exercise,
               type
             });
           });

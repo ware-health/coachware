@@ -122,12 +122,12 @@ function CreatePlanCard({
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[28rem]">
-        <div className="space-y-4">
+        <div className="flex h-full flex-col gap-4">
           <div>
             <p className="text-xs uppercase text-neutral-500">Create</p>
             <h3 className="text-lg font-semibold">New plan</h3>
           </div>
-          <form action={createPlanAction} className="space-y-3">
+          <form action={createPlanAction} className="flex h-full flex-col gap-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">Name</label>
               <Input name="name" required placeholder="Push / Pull / Legs" />
@@ -136,7 +136,7 @@ function CreatePlanCard({
               <label className="text-sm font-medium">Notes</label>
               <Textarea name="notes" placeholder="Optional notes" />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="mt-auto w-full">
               Create plan
             </Button>
           </form>
