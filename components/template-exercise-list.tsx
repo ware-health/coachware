@@ -19,6 +19,13 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  const formatType = (value?: Exercise["type"]) => {
+    if (value === "WR") return "Weights & reps";
+    if (value === "BW") return "Bodyweight (reps)";
+    if (value === "DR") return "Duration";
+    return "N/A";
+  };
+
   const handleMove = (from: number, to: number) => {
     startTransition(() => {
       moveExerciseInTemplate({ templateId, planId, from, to });
@@ -94,7 +101,7 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                       {exercise?.name || exerciseId}
                     </td>
                     <td className="px-4 py-3 text-sm text-neutral-600">
-                      {item.exercise?.type || exercise?.type || "N/A"}
+                      {formatType(item.exercise?.type || exercise?.type)}
                     </td>
                   </tr>
                 );
@@ -129,7 +136,7 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                       name={exercise?.name || exerciseId}
                     />
                     <p className="text-sm text-neutral-700">
-                      Type: {item.exercise?.type || exercise?.type || "N/A"}
+                      Type: {formatType(item.exercise?.type || exercise?.type)}
                     </p>
                   </div>
                 );
