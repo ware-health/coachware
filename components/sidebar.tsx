@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/library", label: "Library" },
-  { href: "/plans", label: "Plans" }
+  { href: "/plans", label: "Plans" },
+  { href: "/clients", label: "Clients" }
 ];
 
 export function Sidebar({ email }: { email?: string }) {
