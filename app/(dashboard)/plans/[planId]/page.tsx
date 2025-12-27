@@ -42,7 +42,13 @@ export default async function PlanDetailPage({
   };
 
   const formatDate = (value: string | null) =>
-    value ? new Date(value).toLocaleDateString() : "—";
+    value
+      ? new Date(value).toLocaleDateString(undefined, {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        })
+      : "—";
 
   return (
     <div className="space-y-8">
