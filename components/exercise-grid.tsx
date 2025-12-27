@@ -90,14 +90,11 @@ export function ExerciseGrid({
             <table className="min-w-full divide-y divide-neutral-200">
               <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                  <th className="w-20 px-4 pr-8 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                     Preview
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                     Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                    Type
                   </th>
                 </tr>
               </thead>
@@ -108,7 +105,7 @@ export function ExerciseGrid({
                     className="hover:bg-neutral-50 cursor-pointer"
                     onClick={() => setSelected(exercise)}
                   >
-                    <td className="px-4 py-2">
+                    <td className="w-20 px-4 pr-8 py-2">
                       <div className="flex h-12 w-12 items-center justify-center">
                         <AnimationPreview
                           animationUrl={exercise.animationUrl}
@@ -119,9 +116,6 @@ export function ExerciseGrid({
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
                       {exercise.name}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-neutral-600">
-                      {exercise.isSystem ? "System" : "Custom"}
                     </td>
                   </tr>
                 ))}

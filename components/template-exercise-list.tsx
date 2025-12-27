@@ -37,7 +37,7 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
         <table className="min-w-full divide-y divide-neutral-200">
           <thead className="bg-neutral-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+              <th className="w-20 px-4 pr-8 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                 Preview
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
@@ -76,8 +76,8 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                     onDragEnd={() => setDragIndex(null)}
                     onClick={() => setSelectedIndex(idx)}
                   >
-                    <td className="px-4 py-2">
-                      <div className="flex h-14 w-16 items-center justify-center">
+                    <td className="w-20 px-4 pr-8 py-2">
+                      <div className="flex h-12 w-12 items-center justify-center">
                         <AnimationPreview
                           animationUrl={exercise?.animationUrl}
                           name={exercise?.name || item.exerciseId}

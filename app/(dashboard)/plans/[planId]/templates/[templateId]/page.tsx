@@ -4,9 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { TemplateExerciseList } from "@/components/template-exercise-list";
 import { TemplateExerciseActions } from "@/components/template-exercise-actions";
 import { exerciseLibrary } from "@/data/exercises";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 
 export default async function TemplateDetailPage({
   params
@@ -68,7 +65,6 @@ export default async function TemplateDetailPage({
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Exercises</h2>
         <TemplateExerciseList
           planId={params.planId}
           templateId={params.templateId}
