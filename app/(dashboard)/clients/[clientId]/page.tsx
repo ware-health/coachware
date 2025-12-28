@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClientPlan } from "@/app/actions/client-plans";
 import { createClient } from "@/lib/supabase/server";
-import { RoutinePlan } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,6 +48,85 @@ export default async function ClientDetailPage({
     .eq("clientId", params.clientId)
     .order("createdAt", { ascending: false });
 
+  const [{ data: routineLogs }] = await Promise.all([
+    supabase.from("routine_logs").select("*").eq("user_id", params.clientId)
+  ]);
+
+  const startDate = client?.created_at
+    ? new Date(client.created_at as string)
+    : new Date(new Date().getFullYear(), 0, 1);
+  const endDate = new Date(new Date().getFullYear(), 11, 31);
+
+  const logDates = new Set<string>();
+  (routineLogs || []).forEach((log: any) => {
+    const raw =
+      log?.performed_at ||
+      log?.session_date ||
+      log?.logged_at ||
+      log?.date ||
+      log?.created_at;
+    if (raw) {
+      const iso = new Date(raw).toISOString().slice(0, 10);
+      logDates.add(iso);
+    }
+  });
+
+  // Map consecutive logged days to color bands for a heatmap-like look.
+  const colorPalette = [
+    "bg-emerald-200",
+    "bg-emerald-300",
+    "bg-emerald-400",
+    "bg-emerald-500",
+    "bg-emerald-600"
+  ];
+  const sortedLogIso = Array.from(logDates).sort();
+  const logColorMap = new Map<string, string>();
+  let segmentIndex = -1;
+  let prevDate: Date | null = null;
+  for (const iso of sortedLogIso) {
+    const current = new Date(iso);
+    const isConsecutive =
+      prevDate && (current.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24) === 1;
+    if (!isConsecutive) {
+      segmentIndex += 1;
+    }
+    const color = colorPalette[segmentIndex % colorPalette.length];
+    logColorMap.set(iso, color);
+    prevDate = current;
+  }
+
+  const generateDays = (from: Date, to: Date) => {
+    const days: { date: Date; key: string; isLogged: boolean }[] = [];
+    const cursor = new Date(from);
+    while (cursor <= to) {
+      const iso = cursor.toISOString().slice(0, 10);
+      days.push({
+        date: new Date(cursor),
+        key: iso,
+        isLogged: logDates.has(iso)
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  };
+
+  const allDays = generateDays(startDate, endDate);
+
+  const months = allDays.reduce<Record<number, { label: string; days: typeof allDays }>>(
+    (acc, day) => {
+      const m = day.date.getMonth();
+      if (!acc[m]) {
+        acc[m] = {
+          label: day.date.toLocaleString("default", { month: "short" }),
+          days: []
+        };
+      }
+      acc[m].days.push(day);
+      return acc;
+    },
+    {}
+  );
+
   const openCreate = searchParams?.createPlan === "1";
 
   return (
@@ -70,6 +148,52 @@ export default async function ClientDetailPage({
           </p>
         </div>
         <CreateClientPlanSheet clientId={params.clientId} defaultOpen={openCreate} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Object.entries(months).map(([monthIdx, month]) => {
+          const startOffset = ((month.days[0]?.date.getDay() ?? 0) + 6) % 7; // Monday start
+          return (
+            <div key={monthIdx} className="rounded-2xl bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-neutral-900">{month.label}</span>
+                  <span className="text-xs text-neutral-500">
+                    {month.days[0]?.date.getFullYear()}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-neutral-400">
+                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </div>
+              <div className="mt-2 grid grid-cols-7 gap-1.5">
+                {Array.from({ length: startOffset }).map((_, idx) => (
+                  <div key={`pad-${monthIdx}-${idx}`} className="h-9 w-9" />
+                ))}
+                {month.days.map((day) => {
+                  const dayNum = day.date.getDate();
+                  const iso = day.key;
+                  const isLogged = day.isLogged;
+                  const color = logColorMap.get(iso);
+                  return (
+                    <div
+                      key={iso}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
+                        isLogged && color
+                          ? `${color} text-emerald-950 shadow-sm`
+                          : "bg-neutral-50 text-neutral-400 border border-neutral-100"
+                      }`}
+                    >
+                      {dayNum}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="overflow-hidden rounded-lg border border-neutral-300">
