@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { notFound, redirect } from "next/navigation";
+import { EnvelopeClosedIcon, CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 
 type Props = {
   params: { clientId: string };
@@ -47,6 +48,12 @@ export default async function ClientDetailPage({
     .eq("owner", user.id)
     .eq("clientId", params.clientId)
     .order("createdAt", { ascending: false });
+  const planRows = plans || [];
+
+  const createClientPlanAction = async (formData: FormData) => {
+    "use server";
+    await createClientPlan(formData);
+  };
 
   const [{ data: routineLogs }] = await Promise.all([
     supabase.from("routine_logs").select("*").eq("user_id", params.clientId)
@@ -95,71 +102,118 @@ export default async function ClientDetailPage({
     prevDate = current;
   }
 
-  const generateDays = (from: Date, to: Date) => {
-    const days: { date: Date; key: string; isLogged: boolean }[] = [];
-    const cursor = new Date(from);
-    while (cursor <= to) {
-      const iso = cursor.toISOString().slice(0, 10);
-      days.push({
-        date: new Date(cursor),
-        key: iso,
-        isLogged: logDates.has(iso)
-      });
-      cursor.setDate(cursor.getDate() + 1);
-    }
-    return days;
-  };
+  // Latest attendance
+  const latestLogIso = routineLogs
+    ?.map((log: any) => {
+      const raw =
+        log?.performed_at ||
+        log?.session_date ||
+        log?.logged_at ||
+        log?.date ||
+        log?.created_at;
+      return raw ? new Date(raw).toISOString() : null;
+    })
+    .filter(Boolean)
+    .sort()
+    .at(-1);
 
-  const allDays = generateDays(startDate, endDate);
+  const latestLogDate = latestLogIso ? new Date(latestLogIso) : null;
+  const daysSinceLast =
+    latestLogDate != null
+      ? Math.max(0, Math.floor((Date.now() - latestLogDate.getTime()) / (1000 * 60 * 60 * 24)))
+      : null;
 
-  const months = allDays.reduce<Record<number, { label: string; days: typeof allDays }>>(
-    (acc, day) => {
-      const m = day.date.getMonth();
-      if (!acc[m]) {
-        acc[m] = {
-          label: day.date.toLocaleString("default", { month: "short" }),
-          days: []
-        };
-      }
-      acc[m].days.push(day);
-      return acc;
-    },
-    {}
-  );
+  // Build aligned month buckets from start month through year end.
+  const monthBuckets: {
+    label: string;
+    year: number;
+    month: number;
+    days: { date: Date; key: string; isLogged: boolean; isDisabled: boolean }[];
+  }[] = [];
+
+  const monthCursor = new Date(startDate);
+  monthCursor.setDate(1);
+
+  while (monthCursor <= endDate) {
+    const year = monthCursor.getFullYear();
+    const month = monthCursor.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = Array.from({ length: daysInMonth }, (_, idx) => {
+      const date = new Date(year, month, idx + 1);
+      const key = date.toISOString().slice(0, 10);
+      const isLogged = logDates.has(key);
+      const isDisabled = date < startDate || date > endDate;
+      return { date, key, isLogged, isDisabled };
+    });
+
+    monthBuckets.push({
+      label: monthCursor.toLocaleString("default", { month: "short" }),
+      year,
+      month,
+      days
+    });
+
+    monthCursor.setMonth(monthCursor.getMonth() + 1);
+  }
 
   const openCreate = searchParams?.createPlan === "1";
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs uppercase text-neutral-500">Client</p>
-          <h1 className="text-2xl font-semibold">{client.name}</h1>
-          <p className="text-sm text-neutral-600">{client.email}</p>
-          <p className="text-sm text-neutral-600">
-            Created:{" "}
-            {client.created_at
-              ? new Date(client.created_at as string).toLocaleDateString(undefined, {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric"
-                })
-              : "—"}
-          </p>
+      <div className="flex flex-col gap-4 rounded-2xl sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-lg font-semibold text-white shadow-sm">
+            {client.name?.[0]?.toUpperCase() ?? "C"}
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-neutral-900">{client.name}</h1>
+              <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Active
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
+              <EnvelopeClosedIcon className="h-4 w-4 text-neutral-400" />
+              <span>{client.email}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-neutral-400" />
+                <span className="text-neutral-500">Joined</span>
+                <span className="font-medium text-neutral-800">
+                  {client.created_at
+                    ? new Date(client.created_at as string).toLocaleDateString(undefined, {
+                        month: "short",
+                        year: "numeric"
+                      })
+                    : "—"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <PersonIcon className="h-4 w-4 text-neutral-400" />
+                <span className="text-neutral-500">Attended</span>
+                <span className="font-medium text-neutral-800">
+                  {daysSinceLast != null ? `${daysSinceLast} days ago` : "No sessions yet"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <CreateClientPlanSheet clientId={params.clientId} defaultOpen={openCreate} />
+        <CreateClientPlanSheet clientId={params.clientId} defaultOpen={openCreate} action={createClientPlanAction} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Object.entries(months).map(([monthIdx, month]) => {
-          const startOffset = ((month.days[0]?.date.getDay() ?? 0) + 6) % 7; // Monday start
+        {monthBuckets.map((month, idx) => {
+          const startOffset = ((new Date(month.year, month.month, 1).getDay() ?? 0) + 6) % 7; // Monday start
           return (
-            <div key={monthIdx} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div key={`${month.year}-${month.month}-${idx}`} className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-neutral-900">{month.label}</span>
                   <span className="text-xs text-neutral-500">
-                    {month.days[0]?.date.getFullYear()}
+                    {month.year}
                   </span>
                 </div>
               </div>
@@ -170,7 +224,7 @@ export default async function ClientDetailPage({
               </div>
               <div className="mt-2 grid grid-cols-7 gap-1.5">
                 {Array.from({ length: startOffset }).map((_, idx) => (
-                  <div key={`pad-${monthIdx}-${idx}`} className="h-9 w-9" />
+                  <div key={`pad-${month.year}-${month.month}-${idx}`} className="h-9 w-9" />
                 ))}
                 {month.days.map((day) => {
                   const dayNum = day.date.getDate();
@@ -183,6 +237,8 @@ export default async function ClientDetailPage({
                       className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
                         isLogged && color
                           ? `${color} text-emerald-950 shadow-sm`
+                          : day.isDisabled
+                          ? "bg-white text-neutral-200"
                           : "bg-neutral-50 text-neutral-400 border border-neutral-100"
                       }`}
                     >
@@ -213,8 +269,8 @@ export default async function ClientDetailPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 bg-white">
-              {plans.length > 0 ? (
-                plans.map((plan) => (
+              {planRows.length > 0 ? (
+                planRows.map((plan) => (
                   <tr key={plan.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3 text-sm font-semibold text-neutral-900">
                       <Link
@@ -255,10 +311,12 @@ export default async function ClientDetailPage({
 
 function CreateClientPlanSheet({
   clientId,
-  defaultOpen = false
+  defaultOpen = false,
+  action
 }: {
   clientId: string;
   defaultOpen?: boolean;
+  action: (formData: FormData) => Promise<void>;
 }) {
   return (
     <Sheet defaultOpen={defaultOpen}>
@@ -274,7 +332,7 @@ function CreateClientPlanSheet({
               This plan will be linked to the selected client.
             </p>
           </div>
-          <form action={createClientPlan} className="flex h-full flex-col gap-3">
+          <form action={action} className="flex h-full flex-col gap-3">
             <input type="hidden" name="clientId" value={clientId} />
             <div className="space-y-2">
               <label className="text-sm font-medium">Name</label>
