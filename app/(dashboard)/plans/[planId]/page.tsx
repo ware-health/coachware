@@ -3,11 +3,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RoutineTemplate } from "@/lib/types";
 import { createTemplate } from "@/app/actions/templates";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DeletePlanButton } from "@/components/delete-plan-button";
+import { CreateTemplateCard } from "@/components/create-template-card";
 
 export default async function PlanDetailPage({
   params
@@ -37,9 +35,12 @@ export default async function PlanDetailPage({
     .eq("owner", user?.id)
     .order("createdAt", { ascending: false });
 
-  const createTemplateAction = async (formData: FormData) => {
+  const createTemplateAction = async (
+    _prevState: { error?: string } | undefined,
+    formData: FormData
+  ) => {
     "use server";
-    await createTemplate(formData);
+    return await createTemplate(_prevState, formData);
   };
 
   const formatDate = (value: string | null) =>
@@ -131,49 +132,5 @@ export default async function PlanDetailPage({
   );
 }
 
-function CreateTemplateCard({
-  planId,
-  action,
-  rounded
-}: {
-  planId: string;
-  action: (formData: FormData) => Promise<void>;
-  rounded?: boolean;
-}) {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="default"
-          className={rounded ? "rounded-md px-4 py-2" : ""}
-        >
-          + New template
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[28rem]">
-        <div className="flex h-full flex-col gap-4">
-          <div>
-            <p className="text-xs uppercase text-neutral-500">Create</p>
-            <h3 className="text-lg font-semibold">New template</h3>
-          </div>
-          <form action={action} className="flex h-full flex-col gap-3">
-            <input type="hidden" name="planId" value={planId} />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input name="name" required placeholder="Upper Body" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
-              <Textarea name="notes" placeholder="Optional notes" />
-            </div>
-            <Button type="submit" className="mt-auto w-full">
-              Create template
-            </Button>
-          </form>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
 
 

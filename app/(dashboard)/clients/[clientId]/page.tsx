@@ -49,7 +49,10 @@ export default async function ClientDetailPage({
     .order("createdAt", { ascending: false });
   const planRows = plans || [];
 
-  const createClientPlanAction = async (formData: FormData) => {
+  const createClientPlanAction = async (
+    prevState: { error?: string } | undefined,
+    formData: FormData
+  ) => {
     "use server";
     return await createClientPlan(formData);
   };
@@ -313,7 +316,7 @@ function CreateClientPlanSheet({
   action
 }: {
   clientId: string;
-  action: (formData: FormData) => Promise<{ error?: string } | void>;
+  action: (prevState: { error?: string } | undefined, formData: FormData) => Promise<{ error?: string } | void>;
 }) {
   return (
     <Sheet>

@@ -87,7 +87,10 @@ const normalizeExercises = (value: unknown): TemplateExercise[] => {
   return [];
 };
 
-export async function createTemplate(formData: FormData) {
+export async function createTemplate(
+  _prevState: { error?: string } | undefined,
+  formData: FormData
+) {
   const name = String(formData.get("name") || "").trim();
   const notes = String(formData.get("notes") || "").trim();
   const planId = String(formData.get("planId") || "").trim();
@@ -112,7 +115,8 @@ export async function createTemplate(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath(`/plans/${planId}`);
-  redirect(`/plans/${planId}`);
+  // Return success - let client component handle redirect and sheet closing
+  return {};
 }
 
 export async function updateTemplateMeta(templateId: string, payload: {
