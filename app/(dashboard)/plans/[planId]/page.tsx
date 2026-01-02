@@ -6,6 +6,7 @@ import { createTemplate } from "@/app/actions/templates";
 import { Button } from "@/components/ui/button";
 import { DeletePlanButton } from "@/components/delete-plan-button";
 import { CreateTemplateCard } from "@/components/create-template-card";
+import { ArrowLeftIcon } from "@radix-ui/react-icons";
 
 export default async function PlanDetailPage({
   params
@@ -54,19 +55,26 @@ export default async function PlanDetailPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs uppercase text-neutral-500">Plan</p>
-          <h1 className="text-2xl font-semibold">{plan.name}</h1>
-          {plan.notes ? (
-            <p className="text-sm text-neutral-600">{plan.notes}</p>
-          ) : null}
+      <div className="flex items-center gap-3">
+        <Link href="/plans">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div className="flex-1 flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase text-neutral-500">Plan</p>
+            <h1 className="text-2xl font-semibold">{plan.name}</h1>
+            {plan.notes ? (
+              <p className="text-sm text-neutral-600">{plan.notes}</p>
+            ) : null}
+          </div>
+          <CreateTemplateCard
+            planId={params.planId}
+            action={createTemplateAction}
+            rounded
+          />
         </div>
-        <CreateTemplateCard
-          planId={params.planId}
-          action={createTemplateAction}
-          rounded
-        />
       </div>
 
       <div className="space-y-3">

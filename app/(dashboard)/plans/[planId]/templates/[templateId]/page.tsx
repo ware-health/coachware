@@ -1,9 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TemplateExerciseList } from "@/components/template-exercise-list";
 import { TemplateExerciseActions } from "@/components/template-exercise-actions";
 import { DeleteTemplateButton } from "@/components/delete-template-button";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { exerciseLibrary, exerciseMap } from "@/data/exercises";
 import { Exercise, ExerciseSet, TemplateExercise } from "@/lib/types";
 
@@ -122,20 +125,27 @@ export default async function TemplateDetailPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs uppercase text-neutral-500">Template</p>
-          <h1 className="text-2xl font-semibold">{template.name}</h1>
-          {template.notes ? (
-            <p className="text-sm text-neutral-600">{template.notes}</p>
-          ) : null}
+      <div className="flex items-center gap-3">
+        <Link href={`/plans/${params.planId}`}>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div className="flex-1 flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase text-neutral-500">Template</p>
+            <h1 className="text-2xl font-semibold">{template.name}</h1>
+            {template.notes ? (
+              <p className="text-sm text-neutral-600">{template.notes}</p>
+            ) : null}
+          </div>
+          <TemplateExerciseActions
+            planId={params.planId}
+            templateId={params.templateId}
+            exercises={exerciseLibrary}
+            rounded
+          />
         </div>
-        <TemplateExerciseActions
-          planId={params.planId}
-          templateId={params.templateId}
-          exercises={exerciseLibrary}
-          rounded
-        />
       </div>
 
       <div className="space-y-3">
