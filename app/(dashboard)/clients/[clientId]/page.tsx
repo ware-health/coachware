@@ -157,8 +157,6 @@ export default async function ClientDetailPage({
     monthCursor.setMonth(monthCursor.getMonth() + 1);
   }
 
-  const openCreate = searchParams?.createPlan === "1";
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl sm:flex-row sm:items-center sm:justify-between">
@@ -201,7 +199,7 @@ export default async function ClientDetailPage({
             </div>
           </div>
         </div>
-        <CreateClientPlanSheet clientId={params.clientId} defaultOpen={openCreate} action={createClientPlanAction} />
+        <CreateClientPlanSheet clientId={params.clientId} action={createClientPlanAction} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -311,15 +309,13 @@ export default async function ClientDetailPage({
 
 function CreateClientPlanSheet({
   clientId,
-  defaultOpen = false,
   action
 }: {
   clientId: string;
-  defaultOpen?: boolean;
   action: (formData: FormData) => Promise<void>;
 }) {
   return (
-    <Sheet defaultOpen={defaultOpen}>
+    <Sheet>
       <SheetTrigger asChild>
         <Button className="rounded-md px-4 py-2">Create routine plan</Button>
       </SheetTrigger>

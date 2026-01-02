@@ -48,8 +48,26 @@ const normalizeExercise = (raw: any): TemplateExercise => {
       }))
     : [defaultSet()];
 
+  // Normalize alternatives - ensure it's always an array
+  const alternatives: Exercise[] = Array.isArray(raw?.alternatives)
+    ? raw.alternatives.map((alt: any) => {
+        const altId = alt?.id || "";
+        const altLibraryExercise = altId ? exerciseMap[altId] : undefined;
+        return {
+          id: altId,
+          name: alt?.name || altLibraryExercise?.name || altId || "Exercise",
+          type: alt?.type || altLibraryExercise?.type || "WR",
+          notes: alt?.notes || altLibraryExercise?.notes || "",
+          primaryMuscleGroup: alt?.primaryMuscleGroup || altLibraryExercise?.primaryMuscleGroup,
+          isSystem: alt?.isSystem ?? altLibraryExercise?.isSystem ?? true,
+          animationUrl: alt?.animationUrl ?? altLibraryExercise?.animationUrl ?? null
+        };
+      })
+    : [];
+
   return {
     exercise,
+    alternatives,
     notes: raw?.notes ?? "",
     superSetId: raw?.superSetId ?? "",
     sets
@@ -238,6 +256,173 @@ export async function moveExerciseInTemplate(args: {
 
   if (error) return { error: error.message };
   revalidatePath(`/plans/${args.planId}/templates/${args.templateId}`);
+  return { success: true };
+}
+
+export async function updateExerciseAlternatives(args: {
+  templateId: string;
+  planId: string;
+  exerciseIndex: number;
+  alternatives: Exercise[];
+}) {
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  // Validate alternatives is an array (never null)
+  if (!Array.isArray(args.alternatives)) {
+    return {
+      success: false,
+      error: "Alternatives must be an array",
+      code: "INVALID_ALTERNATIVES_TYPE"
+    };
+  }
+
+  // Validate maximum of 5 alternatives
+  if (args.alternatives.length > 5) {
+    return {
+      success: false,
+      error: "Maximum of 5 alternatives allowed per exercise",
+      code: "MAX_ALTERNATIVES_EXCEEDED"
+    };
+  }
+
+  // Fetch template
+  const { data: template, error: fetchError } = await supabase
+    .from("routine_templates")
+    .select("exercises, owner")
+    .eq("id", args.templateId)
+    .eq("owner", user.id)
+    .single();
+
+  if (fetchError) {
+    return { success: false, error: fetchError.message };
+  }
+
+  const exercises: TemplateExercise[] = normalizeExercises(template?.exercises);
+
+  // Validate exercise index exists
+  if (args.exerciseIndex < 0 || args.exerciseIndex >= exercises.length) {
+    return {
+      success: false,
+      error: "Invalid exercise index",
+      code: "INVALID_EXERCISE_INDEX"
+    };
+  }
+
+  const targetExercise = exercises[args.exerciseIndex];
+  const primaryExerciseId = targetExercise.exercise.id;
+
+  // Collect all exercise IDs already in the template (primary exercises only)
+  const existingExerciseIds = new Set(
+    exercises.map((ex) => ex.exercise.id)
+  );
+
+  // Validate each alternative
+  const seenIds = new Set<string>();
+  for (const alt of args.alternatives) {
+    // Validate exercise ID exists
+    if (!alt.id) {
+      return {
+        success: false,
+        error: "All alternatives must have a valid exercise ID",
+        code: "INVALID_EXERCISE_ID"
+      };
+    }
+
+    // Check if exercise exists in library (for system exercises) or has required fields
+    if (!exerciseMap[alt.id] && !alt.name) {
+      return {
+        success: false,
+        error: `Exercise with ID "${alt.id}" not found`,
+        code: "EXERCISE_NOT_FOUND"
+      };
+    }
+
+    // Validate no self-reference
+    if (alt.id === primaryExerciseId) {
+      return {
+        success: false,
+        error: "An exercise cannot be its own alternative",
+        code: "SELF_REFERENCE_NOT_ALLOWED"
+      };
+    }
+
+    // Validate no duplicates in alternatives array
+    if (seenIds.has(alt.id)) {
+      return {
+        success: false,
+        error: `Duplicate alternative exercise: "${alt.id}"`,
+        code: "DUPLICATE_ALTERNATIVE"
+      };
+    }
+    seenIds.add(alt.id);
+
+    // Validate alternative is not already in template as a primary exercise
+    if (existingExerciseIds.has(alt.id)) {
+      return {
+        success: false,
+        error: `Exercise "${alt.id}" is already in the template and cannot be used as an alternative`,
+        code: "EXERCISE_ALREADY_IN_TEMPLATE"
+      };
+    }
+  }
+
+  // Note: We're replacing all alternatives, so we don't need to check against existing alternatives
+
+  // Normalize alternatives to ensure they have all required fields
+  const normalizedAlternatives: Exercise[] = args.alternatives.map((alt) => {
+    const libraryExercise = exerciseMap[alt.id];
+    return {
+      id: alt.id,
+      name: alt.name || libraryExercise?.name || alt.id,
+      type: alt.type || libraryExercise?.type || "WR",
+      notes: alt.notes || libraryExercise?.notes || "",
+      primaryMuscleGroup: alt.primaryMuscleGroup || libraryExercise?.primaryMuscleGroup,
+      isSystem: alt.isSystem ?? libraryExercise?.isSystem ?? true,
+      animationUrl: alt.animationUrl ?? libraryExercise?.animationUrl ?? null
+    };
+  });
+
+  // Update the exercise with new alternatives
+  exercises[args.exerciseIndex] = {
+    ...targetExercise,
+    alternatives: normalizedAlternatives
+  };
+
+  // Save to database
+  const { error: updateError } = await supabase
+    .from("routine_templates")
+    .update({ exercises })
+    .eq("id", args.templateId)
+    .eq("owner", user.id);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  revalidatePath(`/plans/${args.planId}/templates/${args.templateId}`);
+  return { success: true };
+}
+
+export async function deleteTemplate(args: {
+  templateId: string;
+  planId: string;
+}) {
+  const { supabase, user } = await getSessionAndClient();
+  if (!user || !supabase) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("routine_templates")
+    .delete()
+    .eq("id", args.templateId)
+    .eq("owner", user.id)
+    .eq("planId", args.planId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/plans/${args.planId}`);
   return { success: true };
 }
 

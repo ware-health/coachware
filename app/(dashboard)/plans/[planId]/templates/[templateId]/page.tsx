@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TemplateExerciseList } from "@/components/template-exercise-list";
 import { TemplateExerciseActions } from "@/components/template-exercise-actions";
+import { DeleteTemplateButton } from "@/components/delete-template-button";
 import { exerciseLibrary, exerciseMap } from "@/data/exercises";
 import { Exercise, ExerciseSet, TemplateExercise } from "@/lib/types";
 
@@ -80,8 +81,26 @@ export default async function TemplateDetailPage({
         }))
       : [defaultSet()];
 
+    // Normalize alternatives - ensure it's always an array
+    const alternatives: Exercise[] = Array.isArray(raw?.alternatives)
+      ? raw.alternatives.map((alt: any) => {
+          const altId = alt?.id || "";
+          const altLibraryExercise = altId ? exerciseMap[altId] : undefined;
+          return {
+            id: altId,
+            name: alt?.name || altLibraryExercise?.name || altId || "Exercise",
+            type: alt?.type || altLibraryExercise?.type || "WR",
+            notes: alt?.notes || altLibraryExercise?.notes || "",
+            primaryMuscleGroup: alt?.primaryMuscleGroup || altLibraryExercise?.primaryMuscleGroup,
+            isSystem: alt?.isSystem ?? altLibraryExercise?.isSystem ?? true,
+            animationUrl: alt?.animationUrl ?? altLibraryExercise?.animationUrl ?? null
+          };
+        })
+      : [];
+
     return {
       exercise,
+      alternatives,
       notes: raw?.notes ?? "",
       superSetId: raw?.superSetId ?? "",
       sets
@@ -124,6 +143,14 @@ export default async function TemplateDetailPage({
           planId={params.planId}
           templateId={params.templateId}
           exercises={normalizeExercises(template.exercises)}
+        />
+      </div>
+
+      <div className="border-t border-neutral-200 pt-6">
+        <DeleteTemplateButton
+          templateId={params.templateId}
+          planId={params.planId}
+          templateName={template.name}
         />
       </div>
     </div>

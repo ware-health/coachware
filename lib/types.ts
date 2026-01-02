@@ -20,6 +20,7 @@ export type TemplateExercise = {
   exercise: Exercise & {
     primaryMuscleGroup?: string;
   };
+  alternatives?: Exercise[];
   sets: ExerciseSet[];
   notes: string;
   superSetId?: string;

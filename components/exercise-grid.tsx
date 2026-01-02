@@ -91,7 +91,6 @@ export function ExerciseGrid({
               <thead className="bg-neutral-50">
                 <tr>
                   <th className="w-20 px-4 pr-8 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                    Preview
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                     Name
@@ -106,7 +105,7 @@ export function ExerciseGrid({
                     onClick={() => setSelected(exercise)}
                   >
                     <td className="w-20 px-4 pr-8 py-2">
-                      <div className="flex h-12 w-12 items-center justify-center">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden">
                         <AnimationPreview
                           animationUrl={exercise.animationUrl}
                           name={exercise.name}

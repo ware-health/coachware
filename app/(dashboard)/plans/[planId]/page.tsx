@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DeletePlanButton } from "@/components/delete-plan-button";
 
 export default async function PlanDetailPage({
   params
@@ -121,6 +122,10 @@ export default async function PlanDetailPage({
             </table>
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-neutral-200 pt-6">
+        <DeletePlanButton planId={params.planId} planName={plan.name} />
       </div>
     </div>
   );

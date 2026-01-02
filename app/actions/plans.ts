@@ -31,4 +31,24 @@ export async function createPlan(formData: FormData) {
   return { data };
 }
 
+export async function deletePlan(planId: string) {
+  const supabase = await createClient();
+  if (!supabase) return { error: "Supabase unavailable" };
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("routine_plans")
+    .delete()
+    .eq("id", planId)
+    .eq("owner", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/plans");
+  return { success: true };
+}
+
 

@@ -50,7 +50,7 @@ export default async function ClientsPage() {
                   Email
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
-                  Created
+                  Joined
                 </th>
               </tr>
             </thead>
