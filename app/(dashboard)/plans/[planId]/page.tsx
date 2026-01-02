@@ -29,6 +29,21 @@ export default async function PlanDetailPage({
     notFound();
   }
 
+  // If this is a client plan, get the client info for navigation and display
+  let clientId: string | null = null;
+  let client: { id: string; name: string; email: string } | null = null;
+  if (plan.clientId) {
+    clientId = plan.clientId;
+    const { data: clientData } = await supabase
+      .from("clients")
+      .select("id, name, email")
+      .eq("id", clientId)
+      .single();
+    if (clientData) {
+      client = clientData;
+    }
+  }
+
   const { data: templates } = await supabase
     .from("routine_templates")
     .select("*")
@@ -56,14 +71,25 @@ export default async function PlanDetailPage({
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
-        <Link href="/plans">
+        <Link href={clientId ? `/clients/${clientId}` : "/plans"}>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeftIcon className="h-4 w-4" />
           </Button>
         </Link>
         <div className="flex-1 flex items-start justify-between">
-          <div>
-            <p className="text-xs uppercase text-neutral-500">Plan</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <p className="text-xs uppercase text-neutral-500">Plan</p>
+              {client && (
+                <Link
+                  href={`/clients/${clientId}`}
+                  className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  {client.name}
+                </Link>
+              )}
+            </div>
             <h1 className="text-2xl font-semibold">{plan.name}</h1>
             {plan.notes ? (
               <p className="text-sm text-neutral-600">{plan.notes}</p>
