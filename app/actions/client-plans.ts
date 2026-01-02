@@ -19,6 +19,20 @@ export async function createClientPlan(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  // Check if client already has a plan
+  const { data: existingPlans, error: checkError } = await supabase
+    .from("routine_plans")
+    .select("id")
+    .eq("owner", user.id)
+    .eq("clientId", clientId)
+    .limit(1);
+
+  if (checkError) return { error: checkError.message };
+
+  if (existingPlans && existingPlans.length > 0) {
+    return { error: "This client already has a plan. Each client can only have one plan." };
+  }
+
   // Create the routine plan
   const { data: plan, error: planError } = await supabase
     .from("routine_plans")
@@ -31,7 +45,9 @@ export async function createClientPlan(formData: FormData) {
     .select()
     .single();
 
-  if (planError || !plan) return { error: planError?.message || "Plan creation failed" };
+  if (planError || !plan) {
+    return { error: planError?.message || "Plan creation failed" };
+  }
 
   revalidatePath(`/clients/${clientId}`);
   redirect(`/clients/${clientId}`);

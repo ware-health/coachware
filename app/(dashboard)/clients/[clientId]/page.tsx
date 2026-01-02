@@ -2,9 +2,8 @@ import Link from "next/link";
 import { createClientPlan } from "@/app/actions/client-plans";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { CreateClientPlanForm } from "@/components/create-client-plan-form";
 import { notFound, redirect } from "next/navigation";
 import { EnvelopeClosedIcon, CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 
@@ -52,7 +51,7 @@ export default async function ClientDetailPage({
 
   const createClientPlanAction = async (formData: FormData) => {
     "use server";
-    await createClientPlan(formData);
+    return await createClientPlan(formData);
   };
 
   const [{ data: routineLogs }] = await Promise.all([
@@ -199,55 +198,9 @@ export default async function ClientDetailPage({
             </div>
           </div>
         </div>
-        <CreateClientPlanSheet clientId={params.clientId} action={createClientPlanAction} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {monthBuckets.map((month, idx) => {
-          const startOffset = ((new Date(month.year, month.month, 1).getDay() ?? 0) + 6) % 7; // Monday start
-          return (
-            <div key={`${month.year}-${month.month}-${idx}`} className="rounded-2xl bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-neutral-900">{month.label}</span>
-                  <span className="text-xs text-neutral-500">
-                    {month.year}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-neutral-400">
-                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-              <div className="mt-2 grid grid-cols-7 gap-1.5">
-                {Array.from({ length: startOffset }).map((_, idx) => (
-                  <div key={`pad-${month.year}-${month.month}-${idx}`} className="h-9 w-9" />
-                ))}
-                {month.days.map((day) => {
-                  const dayNum = day.date.getDate();
-                  const iso = day.key;
-                  const isLogged = day.isLogged;
-                  const color = logColorMap.get(iso);
-                  return (
-                    <div
-                      key={iso}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
-                        isLogged && color
-                          ? `${color} text-emerald-950 shadow-sm`
-                          : day.isDisabled
-                          ? "bg-white text-neutral-200"
-                          : "bg-neutral-50 text-neutral-400 border border-neutral-100"
-                      }`}
-                    >
-                      {dayNum}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+        {planRows.length === 0 ? (
+          <CreateClientPlanSheet clientId={params.clientId} action={createClientPlanAction} />
+        ) : null}
       </div>
 
       <div className="overflow-hidden rounded-lg border border-neutral-300">
@@ -303,6 +256,54 @@ export default async function ClientDetailPage({
           </table>
         </div>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {monthBuckets.map((month, idx) => {
+          const startOffset = ((new Date(month.year, month.month, 1).getDay() ?? 0) + 6) % 7; // Monday start
+          return (
+            <div key={`${month.year}-${month.month}-${idx}`} className="rounded-2xl bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-neutral-900">{month.label}</span>
+                  <span className="text-xs text-neutral-500">
+                    {month.year}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-neutral-400">
+                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </div>
+              <div className="mt-2 grid grid-cols-7 gap-1.5">
+                {Array.from({ length: startOffset }).map((_, idx) => (
+                  <div key={`pad-${month.year}-${month.month}-${idx}`} className="h-9 w-9" />
+                ))}
+                {month.days.map((day) => {
+                  const dayNum = day.date.getDate();
+                  const iso = day.key;
+                  const isLogged = day.isLogged;
+                  const color = logColorMap.get(iso);
+                  return (
+                    <div
+                      key={iso}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
+                        isLogged && color
+                          ? `${color} text-emerald-950 shadow-sm`
+                          : day.isDisabled
+                          ? "bg-white text-neutral-200"
+                          : "bg-neutral-50 text-neutral-400 border border-neutral-100"
+                      }`}
+                    >
+                      {dayNum}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -312,7 +313,7 @@ function CreateClientPlanSheet({
   action
 }: {
   clientId: string;
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ error?: string } | void>;
 }) {
   return (
     <Sheet>
@@ -320,29 +321,7 @@ function CreateClientPlanSheet({
         <Button className="rounded-md px-4 py-2">Create routine plan</Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[28rem]">
-        <div className="flex h-full flex-col gap-4">
-          <div>
-            <p className="text-xs uppercase text-neutral-500">Create</p>
-            <h3 className="text-lg font-semibold">New routine plan</h3>
-            <p className="text-sm text-neutral-600">
-              This plan will be linked to the selected client.
-            </p>
-          </div>
-          <form action={action} className="flex h-full flex-col gap-3">
-            <input type="hidden" name="clientId" value={clientId} />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input name="name" required placeholder="Client plan name" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
-              <Textarea name="notes" placeholder="Optional notes" />
-            </div>
-            <Button type="submit" className="mt-auto w-full">
-              Create plan
-            </Button>
-          </form>
-        </div>
+        <CreateClientPlanForm clientId={clientId} action={action} />
       </SheetContent>
     </Sheet>
   );

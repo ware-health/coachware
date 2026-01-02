@@ -21,6 +21,7 @@ export default async function PlansPage() {
     .from("routine_plans")
     .select("*")
     .eq("owner", user?.id)
+    .is("clientId", null)
     .order("createdAt", { ascending: false });
 
   const createPlanAction = async (formData: FormData) => {
