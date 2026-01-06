@@ -109,6 +109,12 @@ export default async function ClientDetailPage({
     prevDate = current;
   }
 
+  // Convert Maps to plain objects for client component
+  const logColorMapObj: Record<string, string> = Object.fromEntries(logColorMap);
+  const logsByDateObj: Record<string, any[]> = Object.fromEntries(
+    Array.from(logsByDate.entries()).map(([date, logs]) => [date, logs])
+  );
+
   // Latest attendance
   const latestLogIso = routineLogs
     ?.map((log: any) => {
@@ -131,7 +137,7 @@ export default async function ClientDetailPage({
     label: string;
     year: number;
     month: number;
-    days: { date: Date; key: string; isLogged: boolean; isDisabled: boolean }[];
+    days: { date: string; key: string; isLogged: boolean; isDisabled: boolean }[];
   }[] = [];
 
   const monthCursor = new Date(startDate);
@@ -147,7 +153,7 @@ export default async function ClientDetailPage({
       const key = date.toISOString().slice(0, 10);
       const isLogged = logDates.has(key);
       const isDisabled = date < startDate || date > endDate;
-      return { date, key, isLogged, isDisabled };
+      return { date: date.toISOString(), key, isLogged, isDisabled };
     });
 
     monthBuckets.push({
@@ -261,55 +267,11 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {monthBuckets.map((month, idx) => {
-          const startOffset = ((new Date(month.year, month.month, 1).getDay() ?? 0) + 6) % 7; // Monday start
-          return (
-            <div key={`${month.year}-${month.month}-${idx}`} className="rounded-2xl bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-neutral-900">{month.label}</span>
-                  <span className="text-xs text-neutral-500">
-                    {month.year}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-neutral-400">
-                {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-              <div className="mt-2 grid grid-cols-7 gap-1.5">
-                {Array.from({ length: startOffset }).map((_, idx) => (
-                  <div key={`pad-${month.year}-${month.month}-${idx}`} className="h-9 w-9" />
-                ))}
-                {month.days.map((day) => {
-                  const dayNum = day.date.getDate();
-                  const iso = day.key;
-                  const isLogged = day.isLogged;
-                  const color = logColorMap.get(iso);
-                  return (
-                    <div
-                      key={iso}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
-                        isLogged
-                          ? color
-                            ? `${color} text-emerald-950 shadow-sm`
-                            : "bg-emerald-400 text-emerald-950 shadow-sm"
-                          : day.isDisabled
-                          ? "bg-white text-neutral-200"
-                          : "bg-neutral-50 text-neutral-400 border border-neutral-100"
-                      }`}
-                    >
-                      {dayNum}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <ClientCalendar
+        monthBuckets={monthBuckets}
+        logColorMap={logColorMapObj}
+        logsByDate={logsByDateObj}
+      />
     </div>
   );
 }
