@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CreateClientPlanForm } from "@/components/create-client-plan-form";
+import { ClientCalendar } from "@/components/client-calendar";
 import { notFound, redirect } from "next/navigation";
 import { EnvelopeClosedIcon, CalendarIcon, PersonIcon } from "@radix-ui/react-icons";
 
@@ -58,7 +59,7 @@ export default async function ClientDetailPage({
   };
 
   const [{ data: routineLogs }] = await Promise.all([
-    supabase.from("routine_logs").select("*").eq("user_id", params.clientId)
+    supabase.from("routine_logs").select("*").eq("owner", params.clientId)
   ]);
 
   const startDate = client?.created_at
@@ -67,16 +68,20 @@ export default async function ClientDetailPage({
   const endDate = new Date(new Date().getFullYear(), 11, 31);
 
   const logDates = new Set<string>();
+  const logsByDate = new Map<string, any[]>();
+  
   (routineLogs || []).forEach((log: any) => {
-    const raw =
-      log?.performed_at ||
-      log?.session_date ||
-      log?.logged_at ||
-      log?.date ||
-      log?.created_at;
+    // Use startTime as primary date field, fallback to createdAt
+    const raw = log?.startTime || log?.createdAt;
     if (raw) {
       const iso = new Date(raw).toISOString().slice(0, 10);
       logDates.add(iso);
+      
+      // Group logs by date
+      if (!logsByDate.has(iso)) {
+        logsByDate.set(iso, []);
+      }
+      logsByDate.get(iso)!.push(log);
     }
   });
 
@@ -107,12 +112,8 @@ export default async function ClientDetailPage({
   // Latest attendance
   const latestLogIso = routineLogs
     ?.map((log: any) => {
-      const raw =
-        log?.performed_at ||
-        log?.session_date ||
-        log?.logged_at ||
-        log?.date ||
-        log?.created_at;
+      // Use startTime as primary date field, fallback to createdAt
+      const raw = log?.startTime || log?.createdAt;
       return raw ? new Date(raw).toISOString() : null;
     })
     .filter(Boolean)
@@ -291,8 +292,10 @@ export default async function ClientDetailPage({
                     <div
                       key={iso}
                       className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
-                        isLogged && color
-                          ? `${color} text-emerald-950 shadow-sm`
+                        isLogged
+                          ? color
+                            ? `${color} text-emerald-950 shadow-sm`
+                            : "bg-emerald-400 text-emerald-950 shadow-sm"
                           : day.isDisabled
                           ? "bg-white text-neutral-200"
                           : "bg-neutral-50 text-neutral-400 border border-neutral-100"
