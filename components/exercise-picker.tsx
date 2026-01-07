@@ -33,12 +33,14 @@ export function ExercisePicker({
           {label}
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-lg md:max-w-xl">
-        <div className="space-y-4">
+      <SheetContent side="right" className="w-full sm:max-w-lg md:max-w-xl flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 space-y-4 pb-4">
           <div>
             <p className="text-xs uppercase text-neutral-500">Add to template</p>
             <h3 className="text-lg font-semibold">Exercise Library</h3>
           </div>
+        </div>
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
           <ExerciseGrid
             exercises={exercises}
             pageSize={pageSize}
