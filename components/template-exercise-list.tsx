@@ -127,12 +127,15 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
                 Notes
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-neutral-500">
+                Alternatives
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-200 bg-white">
             {exercises.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-sm text-neutral-600">
+                <td colSpan={5} className="px-4 py-4 text-sm text-neutral-600">
                   No exercises yet.
                 </td>
               </tr>
@@ -179,6 +182,27 @@ export function TemplateExerciseList({ planId, templateId, exercises }: Props) {
                         <span className="line-clamp-2">{item.notes}</span>
                       ) : (
                         "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.alternatives && item.alternatives.length > 0 ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.alternatives.map((alt) => (
+                            <div
+                              key={alt.id}
+                              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border border-neutral-200 bg-white"
+                              title={alt.name}
+                            >
+                              <AnimationPreview
+                                animationUrl={alt.animationUrl}
+                                name={alt.name}
+                                size="xs"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-neutral-400">—</span>
                       )}
                     </td>
                   </tr>
