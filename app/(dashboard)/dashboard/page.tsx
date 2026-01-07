@@ -22,15 +22,9 @@ export default async function DashboardPage() {
   const ownerId = user.id;
 
   const [
-    { count: plansCount, data: plansData },
     { count: clientPlansCount },
     { data: clientsData, count: clientsCountExact }
   ] = await Promise.all([
-    supabase
-      .from("routine_plans")
-      .select("*", { count: "exact" })
-      .eq("owner", ownerId)
-      .is("clientId", null),
     supabase
       .from("routine_plans")
       .select("*", { head: true, count: "exact" })
@@ -44,7 +38,6 @@ export default async function DashboardPage() {
   ]);
 
   const exercisesCount = exerciseLibrary.length;
-  const plansTotal = plansCount ?? plansData?.length ?? 0;
   const clientPlansTotal = clientPlansCount ?? 0;
   const recentClients = clientsData || [];
   const clientsCount = clientsCountExact ?? recentClients.length;
@@ -65,13 +58,6 @@ export default async function DashboardPage() {
       accent: "bg-violet-100 text-violet-700"
     },
     {
-      label: "Standalone plans",
-      value: plansTotal,
-      hint: "Not client-linked",
-      icon: <RocketIcon className="h-5 w-5" />,
-      accent: "bg-emerald-100 text-emerald-700"
-    },
-    {
       label: "Exercises",
       value: exercisesCount,
       hint: "From library",
@@ -87,13 +73,10 @@ export default async function DashboardPage() {
           <p className="text-xs uppercase text-neutral-500">Overview</p>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-sm text-neutral-600">
-            Quick snapshot across exercises, plans, and client-linked plans.
+            Quick snapshot across exercises and client plans.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/plans">
-            <Button className="rounded-md">Create plan</Button>
-          </Link>
           <Link href="/clients">
             <Button variant="outline" className="rounded-md">
               Manage clients

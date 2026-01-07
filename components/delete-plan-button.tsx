@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { deletePlan } from "@/app/actions/plans";
 
 type Props = {
   planId: string;
   planName: string;
+  clientId: string;
 };
 
-export function DeletePlanButton({ planId, planName }: Props) {
+export function DeletePlanButton({ planId, planName, clientId }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -25,13 +25,8 @@ export function DeletePlanButton({ planId, planName }: Props) {
     startTransition(async () => {
       const result = await deletePlan(planId);
       if (result.success) {
-        // If we're on the plan detail page, redirect to plans list
-        // Otherwise, just refresh the current page
-        if (pathname?.startsWith(`/plans/${planId}`)) {
-          router.push("/plans");
-        } else {
-          router.refresh();
-        }
+        // Redirect to the client page after deletion
+        router.push(`/clients/${clientId}`);
       } else {
         alert(result.error || "Failed to delete plan");
         setShowConfirm(false);

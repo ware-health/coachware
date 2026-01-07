@@ -29,20 +29,20 @@ export default async function PlanDetailPage({
     notFound();
   }
 
-  // If this is a client plan, get the client info for navigation and display
-  let clientId: string | null = null;
-  let client: { id: string; name: string; email: string } | null = null;
-  if (plan.clientId) {
-    clientId = plan.clientId;
-    const { data: clientData } = await supabase
-      .from("clients")
-      .select("id, name, email")
-      .eq("id", clientId)
-      .single();
-    if (clientData) {
-      client = clientData;
-    }
+  // All plans must be client-linked now
+  if (!plan.clientId) {
+    notFound();
   }
+
+  // Get the client info for navigation and display
+  const clientId = plan.clientId;
+  const { data: clientData } = await supabase
+    .from("clients")
+    .select("id, name, email")
+    .eq("id", clientId)
+    .single();
+  
+  const client = clientData || null;
 
   const { data: templates } = await supabase
     .from("routine_templates")
@@ -71,7 +71,7 @@ export default async function PlanDetailPage({
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
-        <Link href={clientId ? `/clients/${clientId}` : "/plans"}>
+        <Link href={`/clients/${clientId}`}>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeftIcon className="h-4 w-4" />
           </Button>
@@ -160,7 +160,7 @@ export default async function PlanDetailPage({
       </div>
 
       <div className="border-t border-neutral-200 pt-6">
-        <DeletePlanButton planId={params.planId} planName={plan.name} />
+        <DeletePlanButton planId={params.planId} planName={plan.name} clientId={clientId} />
       </div>
     </div>
   );

@@ -58,9 +58,39 @@ export default async function ClientDetailPage({
     return await createClientPlan(formData);
   };
 
-  const [{ data: routineLogs }] = await Promise.all([
-    supabase.from("routine_logs").select("*").eq("owner", params.clientId)
+  const [{ data: routineLogs }, { data: templates }, { data: allPlans }] = await Promise.all([
+    supabase.from("routine_logs").select("*").eq("owner", params.clientId),
+    supabase
+      .from("routine_templates")
+      .select("id, planId")
+      .eq("owner", user.id),
+    supabase
+      .from("routine_plans")
+      .select("id, name")
+      .eq("owner", user.id)
   ]);
+
+  // Create a map of templateId -> planId -> planName
+  const templateToPlanMap = new Map<string, string>();
+  (templates || []).forEach((template: any) => {
+    templateToPlanMap.set(template.id, template.planId);
+  });
+
+  const planIdToNameMap = new Map<string, string>();
+  (allPlans || []).forEach((plan: any) => {
+    planIdToNameMap.set(plan.id, plan.name);
+  });
+
+  // Enrich logs with plan information
+  const enrichedLogs = (routineLogs || []).map((log: any) => {
+    const templateId = log.templateId;
+    const planId = templateId ? templateToPlanMap.get(templateId) : null;
+    const planName = planId ? planIdToNameMap.get(planId) : null;
+    return {
+      ...log,
+      planName: planName || null
+    };
+  });
 
   const startDate = client?.created_at
     ? new Date(client.created_at as string)
@@ -70,7 +100,7 @@ export default async function ClientDetailPage({
   const logDates = new Set<string>();
   const logsByDate = new Map<string, any[]>();
   
-  (routineLogs || []).forEach((log: any) => {
+  enrichedLogs.forEach((log: any) => {
     // Use startTime as primary date field, fallback to createdAt
     const raw = log?.startTime || log?.createdAt;
     if (raw) {
@@ -116,8 +146,8 @@ export default async function ClientDetailPage({
   );
 
   // Latest attendance
-  const latestLogIso = routineLogs
-    ?.map((log: any) => {
+  const latestLogIso = enrichedLogs
+    .map((log: any) => {
       // Use startTime as primary date field, fallback to createdAt
       const raw = log?.startTime || log?.createdAt;
       return raw ? new Date(raw).toISOString() : null;

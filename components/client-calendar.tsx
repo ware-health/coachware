@@ -13,6 +13,7 @@ type Log = {
   endTime: string;
   exercises: any;
   createdAt: string;
+  planName?: string | null;
 };
 
 type Day = {
@@ -177,7 +178,16 @@ export function ClientCalendar({ monthBuckets, logColorMap, logsByDate }: Props)
                       <div className="bg-neutral-50 px-5 py-4 border-b border-neutral-200">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-neutral-900">{log.name}</h3>
+                            <p className="text-xs uppercase text-neutral-500 mb-1.5">Workout</p>
+                            <h3 className="text-xl font-semibold text-neutral-900 mb-2">{log.name}</h3>
+                            {log.planName && (
+                              <div className="mb-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                                  {log.planName}
+                                </span>
+                              </div>
+                            )}
                             {log.notes && (
                               <p className="text-sm text-neutral-600 mt-1.5">{log.notes}</p>
                             )}
