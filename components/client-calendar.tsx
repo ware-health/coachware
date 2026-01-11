@@ -137,8 +137,8 @@ export function ClientCalendar({ monthBuckets, logColorMap, logsByDate }: Props)
                       className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
                         isLogged
                           ? color
-                            ? `${color} text-emerald-950 shadow-sm cursor-pointer hover:opacity-80`
-                            : "bg-emerald-400 text-emerald-950 shadow-sm cursor-pointer hover:opacity-80"
+                            ? `${color} text-white shadow-sm cursor-pointer hover:opacity-80`
+                            : "bg-emerald-400 text-white shadow-sm cursor-pointer hover:opacity-80"
                           : day.isDisabled
                           ? "bg-white text-neutral-200 cursor-not-allowed"
                           : "bg-neutral-50 text-neutral-400 border border-neutral-100 cursor-default"
