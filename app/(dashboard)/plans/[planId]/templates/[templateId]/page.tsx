@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TemplateExerciseList } from "@/components/template-exercise-list";
 import { TemplateExerciseActions } from "@/components/template-exercise-actions";
 import { DeleteTemplateButton } from "@/components/delete-template-button";
+import { ClientCalendar } from "@/components/client-calendar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { exerciseLibrary, exerciseMap } from "@/data/exercises";
@@ -31,6 +32,25 @@ export default async function TemplateDetailPage({
   if (!template) {
     notFound();
   }
+
+  // Get plan to get clientId
+  const { data: plan } = await supabase
+    .from("routine_plans")
+    .select("*")
+    .eq("id", params.planId)
+    .eq("owner", user?.id)
+    .single();
+
+  if (!plan || !plan.clientId) {
+    notFound();
+  }
+
+  // Get client for calendar start date
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id, created_at")
+    .eq("id", plan.clientId)
+    .single();
 
   const updateMeta = async (formData: FormData) => {
     "use server";
@@ -123,6 +143,107 @@ export default async function TemplateDetailPage({
     return [];
   };
 
+  // Fetch logs for calendar - filtered by templateId
+  const { data: routineLogs } = await supabase
+    .from("routine_logs")
+    .select("*")
+    .eq("templateId", params.templateId);
+
+  // Enrich logs with plan information
+  const enrichedLogs = (routineLogs || []).map((log: any) => {
+    return {
+      ...log,
+      planName: plan.name || null
+    };
+  });
+
+  const startDate = client?.created_at
+    ? new Date(client.created_at as string)
+    : new Date(new Date().getFullYear(), 0, 1);
+  const endDate = new Date(new Date().getFullYear(), 11, 31);
+
+  const logDates = new Set<string>();
+  const logsByDate = new Map<string, any[]>();
+  
+  enrichedLogs.forEach((log: any) => {
+    // Use startTime as primary date field, fallback to createdAt
+    const raw = log?.startTime || log?.createdAt;
+    if (raw) {
+      const iso = new Date(raw).toISOString().slice(0, 10);
+      logDates.add(iso);
+      
+      // Group logs by date
+      if (!logsByDate.has(iso)) {
+        logsByDate.set(iso, []);
+      }
+      logsByDate.get(iso)!.push(log);
+    }
+  });
+
+  // Map consecutive logged days to color bands for a heatmap-like look.
+  const colorPalette = [
+    "bg-emerald-200",
+    "bg-emerald-300",
+    "bg-emerald-400",
+    "bg-emerald-500",
+    "bg-emerald-600"
+  ];
+  const sortedLogIso = Array.from(logDates).sort();
+  const logColorMap = new Map<string, string>();
+  let segmentIndex = -1;
+  let prevDate: Date | null = null;
+  for (const iso of sortedLogIso) {
+    const current = new Date(iso);
+    const isConsecutive =
+      prevDate && (current.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24) === 1;
+    if (!isConsecutive) {
+      segmentIndex += 1;
+    }
+    const color = colorPalette[segmentIndex % colorPalette.length];
+    logColorMap.set(iso, color);
+    prevDate = current;
+  }
+
+  // Convert Maps to plain objects for client component
+  const logColorMapObj: Record<string, string> = Object.fromEntries(logColorMap);
+  const logsByDateObj: Record<string, any[]> = Object.fromEntries(
+    Array.from(logsByDate.entries()).map(([date, logs]) => [date, logs])
+  );
+
+  // Build aligned month buckets from start month through year end.
+  const monthBuckets: {
+    label: string;
+    year: number;
+    month: number;
+    days: { date: string; key: string; isLogged: boolean; isDisabled: boolean }[];
+  }[] = [];
+
+  const monthCursor = new Date(startDate);
+  monthCursor.setDate(1);
+
+  while (monthCursor <= endDate) {
+    const year = monthCursor.getFullYear();
+    const month = monthCursor.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = Array.from({ length: daysInMonth }, (_, idx) => {
+      const date = new Date(year, month, idx + 1);
+      const key = date.toISOString().slice(0, 10);
+      const isLogged = logDates.has(key);
+      const isDisabled = date < startDate || date > endDate;
+      return { date: date.toISOString(), key, isLogged, isDisabled };
+    });
+
+    monthBuckets.push({
+      label: monthCursor.toLocaleString("default", { month: "short" }),
+      year,
+      month,
+      days
+    });
+
+    monthCursor.setMonth(monthCursor.getMonth() + 1);
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
@@ -155,6 +276,12 @@ export default async function TemplateDetailPage({
           exercises={normalizeExercises(template.exercises)}
         />
       </div>
+
+      <ClientCalendar
+        monthBuckets={monthBuckets}
+        logColorMap={logColorMapObj}
+        logsByDate={logsByDateObj}
+      />
 
       <div className="border-t border-neutral-200 pt-6">
         <DeleteTemplateButton

@@ -6,6 +6,7 @@ import { createTemplate } from "@/app/actions/templates";
 import { Button } from "@/components/ui/button";
 import { DeletePlanButton } from "@/components/delete-plan-button";
 import { CreateTemplateCard } from "@/components/create-template-card";
+import { ClientCalendar } from "@/components/client-calendar";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 
 export default async function PlanDetailPage({
@@ -38,7 +39,7 @@ export default async function PlanDetailPage({
   const clientId = plan.clientId;
   const { data: clientData } = await supabase
     .from("clients")
-    .select("id, name, email")
+    .select("id, name, email, created_at")
     .eq("id", clientId)
     .single();
   
@@ -67,6 +68,132 @@ export default async function PlanDetailPage({
           year: "numeric"
         })
       : "—";
+
+  // Fetch logs for calendar
+  const [logsResult, allTemplatesResult, plansResult] = await Promise.all([
+    supabase.from("routine_logs").select("*").eq("owner", clientId),
+    supabase
+      .from("routine_templates")
+      .select("id, planId")
+      .eq("owner", user?.id),
+    supabase
+      .from("routine_plans")
+      .select("id, name")
+      .eq("owner", user?.id)
+  ]);
+
+  const routineLogs = logsResult.data;
+  const allTemplates = allTemplatesResult.data;
+  const allPlans = plansResult.data;
+
+  // Create a map of templateId -> planId -> planName
+  const templateToPlanMap = new Map<string, string>();
+  (allTemplates || []).forEach((template: any) => {
+    templateToPlanMap.set(template.id, template.planId);
+  });
+
+  const planIdToNameMap = new Map<string, string>();
+  (allPlans || []).forEach((planItem: any) => {
+    planIdToNameMap.set(planItem.id, planItem.name);
+  });
+
+  // Enrich logs with plan information
+  const enrichedLogs = (routineLogs || []).map((log: any) => {
+    const templateId = log.templateId;
+    const planId = templateId ? templateToPlanMap.get(templateId) : null;
+    const planName = planId ? planIdToNameMap.get(planId) : null;
+    return {
+      ...log,
+      planName: planName || null
+    };
+  });
+
+  const startDate = client?.created_at
+    ? new Date(client.created_at as string)
+    : new Date(new Date().getFullYear(), 0, 1);
+  const endDate = new Date(new Date().getFullYear(), 11, 31);
+
+  const logDates = new Set<string>();
+  const logsByDate = new Map<string, any[]>();
+  
+  enrichedLogs.forEach((log: any) => {
+    // Use startTime as primary date field, fallback to createdAt
+    const raw = log?.startTime || log?.createdAt;
+    if (raw) {
+      const iso = new Date(raw).toISOString().slice(0, 10);
+      logDates.add(iso);
+      
+      // Group logs by date
+      if (!logsByDate.has(iso)) {
+        logsByDate.set(iso, []);
+      }
+      logsByDate.get(iso)!.push(log);
+    }
+  });
+
+  // Map consecutive logged days to color bands for a heatmap-like look.
+  const colorPalette = [
+    "bg-emerald-200",
+    "bg-emerald-300",
+    "bg-emerald-400",
+    "bg-emerald-500",
+    "bg-emerald-600"
+  ];
+  const sortedLogIso = Array.from(logDates).sort();
+  const logColorMap = new Map<string, string>();
+  let segmentIndex = -1;
+  let prevDate: Date | null = null;
+  for (const iso of sortedLogIso) {
+    const current = new Date(iso);
+    const isConsecutive =
+      prevDate && (current.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24) === 1;
+    if (!isConsecutive) {
+      segmentIndex += 1;
+    }
+    const color = colorPalette[segmentIndex % colorPalette.length];
+    logColorMap.set(iso, color);
+    prevDate = current;
+  }
+
+  // Convert Maps to plain objects for client component
+  const logColorMapObj: Record<string, string> = Object.fromEntries(logColorMap);
+  const logsByDateObj: Record<string, any[]> = Object.fromEntries(
+    Array.from(logsByDate.entries()).map(([date, logs]) => [date, logs])
+  );
+
+  // Build aligned month buckets from start month through year end.
+  const monthBuckets: {
+    label: string;
+    year: number;
+    month: number;
+    days: { date: string; key: string; isLogged: boolean; isDisabled: boolean }[];
+  }[] = [];
+
+  const monthCursor = new Date(startDate);
+  monthCursor.setDate(1);
+
+  while (monthCursor <= endDate) {
+    const year = monthCursor.getFullYear();
+    const month = monthCursor.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = Array.from({ length: daysInMonth }, (_, idx) => {
+      const date = new Date(year, month, idx + 1);
+      const key = date.toISOString().slice(0, 10);
+      const isLogged = logDates.has(key);
+      const isDisabled = date < startDate || date > endDate;
+      return { date: date.toISOString(), key, isLogged, isDisabled };
+    });
+
+    monthBuckets.push({
+      label: monthCursor.toLocaleString("default", { month: "short" }),
+      year,
+      month,
+      days
+    });
+
+    monthCursor.setMonth(monthCursor.getMonth() + 1);
+  }
 
   return (
     <div className="space-y-8">
@@ -158,6 +285,12 @@ export default async function PlanDetailPage({
           </div>
         </div>
       </div>
+
+      <ClientCalendar
+        monthBuckets={monthBuckets}
+        logColorMap={logColorMapObj}
+        logsByDate={logsByDateObj}
+      />
 
       <div className="border-t border-neutral-200 pt-6">
         <DeletePlanButton planId={params.planId} planName={plan.name} clientId={clientId} />
