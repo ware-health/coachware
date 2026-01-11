@@ -134,7 +134,7 @@ export function ClientCalendar({ monthBuckets, logColorMap, logsByDate }: Props)
                       type="button"
                       onClick={() => isLogged && setSelectedDate(iso)}
                       disabled={!isLogged}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-[12px] font-semibold transition-colors ${
+                      className={`flex h-9 w-9 items-center justify-center text-[12px] font-semibold transition-colors ${
                         isLogged
                           ? color
                             ? `${color} text-white shadow-sm cursor-pointer hover:opacity-80`
