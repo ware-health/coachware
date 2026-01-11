@@ -40,7 +40,7 @@ export function ExercisePicker({
             <h3 className="text-lg font-semibold">Exercise Library</h3>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+        <div className="flex-1 overflow-y-auto -mx-6 px-6 pt-2">
           <ExerciseGrid
             exercises={exercises}
             pageSize={pageSize}
